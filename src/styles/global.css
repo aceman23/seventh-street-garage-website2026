@@ -45,6 +45,8 @@ a{color:inherit}
 .skip:focus{left:1rem}
 .wrap{max-width:var(--wrap);margin-inline:auto;padding-left:var(--gutter);padding-right:var(--gutter-r)}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.scroll-reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1);transition-delay:var(--reveal-delay,0ms);will-change:opacity,transform}
+.scroll-reveal.is-visible{opacity:1;transform:none}
 
 /* ---------- type ---------- */
 h1,h2,h3,.display{font-family:var(--display);font-weight:850;line-height:1.02;letter-spacing:-.01em;text-wrap:balance;margin:0}

@@ -343,6 +343,30 @@ function initForms(): void {
   });
 }
 
+function initScrollReveal(): void {
+  if (reduce || !('IntersectionObserver' in window)) return;
+
+  const targets = document.querySelectorAll<HTMLElement>(
+    'section.band, h1, h2, h3, .eyebrow, .lead, .svc-card, .chip, .stat, .steps li, .frame, .v, .review, .call-card, .callout, .side-list, .meta-card, .need > div, .map-frame, .glance',
+  );
+  const observer = new IntersectionObserver(
+    (entries, currentObserver) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        currentObserver.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.12, rootMargin: '0px 0px -40px' },
+  );
+
+  targets.forEach((target, index) => {
+    target.classList.add('scroll-reveal');
+    target.style.setProperty('--reveal-delay', `${Math.min(index % 4, 3) * 70}ms`);
+    observer.observe(target);
+  });
+}
+
 /* ---------- footer year ---------- */
 function initYear(): void {
   const y = document.querySelector<HTMLElement>('[data-year]');
@@ -356,6 +380,7 @@ function init(): void {
   initReviews();
   initVideos();
   initForms();
+  initScrollReveal();
   initYear();
 }
 

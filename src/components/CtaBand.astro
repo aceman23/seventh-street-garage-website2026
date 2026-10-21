@@ -2,13 +2,16 @@
 import { SITE } from '@/data/site';
 import Icon from './Icon.astro';
 ---
-<section class="cta-band">
+<section class="cta-band" aria-labelledby="cta-heading">
   <div class="wrap">
-    <div>
+    <div class="cta-copy">
       <p class="eyebrow">Stuck right now?</p>
-      <h2>Call 24/7 dispatch</h2>
+      <h2 id="cta-heading">Call 24/7 dispatch</h2>
+      <p>Live help from a real dispatcher, day or night.</p>
     </div>
-    <a href={`tel:${SITE.tel}`} class="big">{SITE.phone}</a>
-    <a href={`tel:${SITE.tel}`} class="btn btn-navy"><Icon name="phone" /> Call for a tow</a>
+    <div class="cta-action">
+      <a href={`tel:${SITE.tel}`} class="big">{SITE.phone}</a>
+      <a href={`tel:${SITE.tel}`} class="btn btn-navy"><Icon name="phone" /> Call for a tow</a>
+    </div>
   </div>
 </section>

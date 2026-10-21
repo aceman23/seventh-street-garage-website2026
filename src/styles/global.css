@@ -312,11 +312,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 /* CTA band */
 .cta-band{background:var(--amber);color:var(--ink);position:relative;overflow:hidden}
-.cta-band .wrap{display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap;padding-block:clamp(2.5rem,5vw,3.75rem)}
-.cta-band h2{font-size:clamp(1.8rem,1.2rem + 2.4vw,3.2rem)}
-.cta-band .big{font-family:var(--mono);font-size:clamp(1.6rem,1rem + 2.4vw,2.8rem);font-weight:500;color:var(--ink);text-decoration:none;letter-spacing:-.03em;display:block}
-.cta-band .btn-navy{font-size:1.05rem}
+.cta-band .wrap{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:clamp(2rem,6vw,6rem);padding-block:clamp(2.5rem,5vw,3.75rem)}
+.cta-copy{display:grid;gap:.35rem}
+.cta-band h2{font-size:clamp(1.8rem,1.2rem + 2.4vw,3.2rem);line-height:1.05}
+.cta-copy>p:last-child{margin-top:.45rem;max-width:36ch;font-size:1rem;color:rgba(10,16,32,.72)}
+.cta-action{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;justify-content:flex-end}
+.cta-band .big{font-family:var(--mono);font-size:clamp(1.45rem,1rem + 2vw,2.55rem);font-weight:500;color:var(--ink);text-decoration:none;letter-spacing:-.03em;display:block;white-space:nowrap}
+.cta-band .big:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.15em}
+.cta-band .btn-navy{font-size:1.05rem;white-space:nowrap}
 .cta-band::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(-55deg,transparent 0 22px,rgba(10,16,32,.05) 22px 44px);pointer-events:none}
+@media (max-width:760px){.cta-band .wrap{grid-template-columns:1fr;gap:1.5rem}.cta-action{justify-content:flex-start;gap:1rem}.cta-band .big{font-size:clamp(1.35rem,7vw,2rem)}}
 
 /* page hero (inner pages) */
 .page-hero{background:radial-gradient(800px 400px at 90% 0%,rgba(255,184,28,.13),transparent 60%),var(--ink);color:var(--white);padding-block:clamp(1.75rem,3vw,2.5rem) clamp(2.75rem,5vw,4rem)}

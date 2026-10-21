@@ -106,6 +106,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .mega a small{display:block;color:var(--muted);font-weight:450;font-size:.84rem;line-height:1.35}
 .mega .mega-all{grid-column:1/-1;border-top:1px solid var(--line);margin-top:.5rem;padding-top:.75rem;font-family:var(--mono);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}
 .header-cta{margin-left:.5rem;padding:.75em 1.1em;font-size:.92rem}
+.header-social{display:flex;align-items:center;gap:.15rem;margin-left:.35rem}
+.header-social a{width:34px;height:34px;padding:0;display:grid;place-items:center;border-radius:50%;color:var(--mist)}
+.header-social a:hover{background:rgba(255,255,255,.08);color:var(--amber)}
+.header-social svg{width:17px;height:17px}
 .menu-toggle{display:none;margin-left:auto;background:none;border:1px solid var(--line-dark);color:var(--white);border-radius:6px;width:46px;height:42px;cursor:pointer}
 .menu-toggle span,.menu-toggle span::before,.menu-toggle span::after{display:block;width:20px;height:2px;background:currentColor;margin:auto;position:relative;transition:.2s}
 .menu-toggle span::before,.menu-toggle span::after{content:"";position:absolute;left:0}
@@ -122,7 +126,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   .mega a{color:var(--white);border-bottom:0;font-size:1rem}
   .mega a small{color:var(--mist)}
   .mega a:hover{background:rgba(255,255,255,.06);color:var(--amber)}
-  .header-cta{margin:1rem 0 0}
+  .header-social{margin:1rem 0 0;order:2;justify-content:flex-start}
+  .header-social a{width:42px;height:42px;border:1px solid var(--line-dark)}
+  .header-cta{margin:1rem 0 0;order:3}
 }
 
 /* ---------- bands ---------- */

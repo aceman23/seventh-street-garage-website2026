@@ -48,6 +48,14 @@ const primary = PRIMARY_SERVICES.map((slug) => SERVICES.find((s) => s.slug === s
           </li>
         ))}
       </ul>
+      <div class="header-social" aria-label="Social media">
+        <a href={SITE.instagram} rel="noopener" target="_blank" aria-label="Instagram">
+          <Icon name="instagram" />
+        </a>
+        <a href={SITE.facebook} rel="noopener" target="_blank" aria-label="Facebook">
+          <Icon name="facebook" />
+        </a>
+      </div>
       <a href={`tel:${SITE.tel}`} class="btn btn-amber header-cta">
         <Icon name="phone" /> Call
       </a>

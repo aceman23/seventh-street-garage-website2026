@@ -8,7 +8,7 @@ export const SITE = {
   tel: '+13108561980',
   founded: '1978', // TODO confirm: main site says 1978, OPG page says 1953
   instagram: 'https://www.instagram.com/7thstreetgarageinc/',
-  facebook: '', // TODO paste exact Facebook page URL (hide icon while empty)
+  facebook: 'https://www.facebook.com/seven.streetgarage',
   gmaps: 'https://www.google.com/maps/search/?api=1&query=Seventh+Street+Garage+1615+E+Mauretania+St+Wilmington+CA+90744',
   hours: { dispatch: '24 hours a day, 7 days a week, 365 days a year', office: '8am–5pm' },
   auction: {

@@ -1,4 +1,279 @@
 ---
-// Placeholder — Bolt replaces this in Prompt 2.
+import Base from '@/layouts/Base.astro';
+import Carousel from '@/components/Carousel.astro';
+import ServiceArea from '@/components/ServiceArea.astro';
+import ServiceCard from '@/components/ServiceCard.astro';
+import FaqList from '@/components/FaqList.astro';
+import Img from '@/components/Img.astro';
+import Icon from '@/components/Icon.astro';
+import { SITE, HERO_SLIDES, VIDEOS } from '@/data/site';
+import { SERVICES, PRIMARY_SERVICES } from '@/data/services';
+import { HOME_FAQ } from '@/data/faqs';
+import { getCities } from '@/lib/geo';
+import { webPage, faqPage, videoObject } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const primaryServices = PRIMARY_SERVICES.map(
+  (slug) => SERVICES.find((s) => s.slug === slug)!,
+).filter(Boolean);
+
+const moreServiceSlugs = [
+  'jump-starts',
+  'lockout-service',
+  'tire-changes',
+  'fuel-delivery',
+  'motorcycle-towing',
+  'long-distance-towing',
+];
+const moreServices = moreServiceSlugs
+  .map((slug) => SERVICES.find((s) => s.slug === slug)!)
+  .filter(Boolean);
+
+const cityCount = getCities().length;
+
+const graph: Node[] = [
+  webPage('/', 'Seventh Street Garage', '24/7 towing, roadside assistance, heavy-duty recovery, impound and secure vehicle storage in LA and Orange County', [{ name: 'Home', path: '/' }]),
+  faqPage(HOME_FAQ, '/'),
+];
+
+for (const v of VIDEOS) {
+  if (v.youtube || v.mp4) {
+    graph.push(
+      videoObject({
+        name: v.title,
+        description: v.desc,
+        thumbnailUrl: `${SITE.url}/images/${v.poster}.webp`,
+        embedUrl: v.youtube
+          ? `https://www.youtube-nocookie.com/embed/${v.youtube}`
+          : undefined,
+        contentUrl: v.mp4 ? `${SITE.url}${v.mp4}` : undefined,
+      }),
+    );
+  }
+}
 ---
-<h1>Seventh Street Garage — starter kit loaded</h1>
+<Base
+  title="Seventh Street Garage | 24/7 Towing & Roadside, Los Angeles"
+  description="24/7 towing, roadside assistance, heavy-duty recovery, impound and storage in LA & Orange County since 1978. LAPD OPG Unit 5. Call (310) 856-1980."
+  path="/"
+  graph={graph}
+>
+  {/* 1. HERO */}
+  <section class="hero speed">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Serving Southern California since {SITE.founded}</p>
+        <h1>24/7 towing &amp; roadside <em>in LA &amp; Orange County</em></h1>
+        <p class="lead">Light-, medium- and heavy-duty towing, roadside assistance, accident recovery, impound and secure storage. Dispatched around the clock from Wilmington and Bell Gardens by the team that public safety agencies call.</p>
+        <div class="btn-row">
+          <a href={`tel:${SITE.tel}`} class="btn btn-amber"><Icon name="phone" /> Call dispatch</a>
+          <a href="/vehicle-release/" class="btn btn-ghost">Claim your vehicle</a>
+        </div>
+        <div class="hero-phone">
+          <a href={`tel:${SITE.tel}`} class="num">{SITE.phone}</a>
+          <span class="tag">24 hrs · 7 days · 365</span>
+        </div>
+      </div>
+      <Carousel slides={HERO_SLIDES} interval={6000} />
+    </div>
+  </section>
+
+  {/* 2. TRUST */}
+  <section class="trust" aria-label="Trusted by public safety agencies">
+    <div class="wrap">
+      <img src="/images/opg-unit-5-badge.webp" alt="Los Angeles Official Police Garage Unit 5 badge" width="225" height="226" loading="lazy" decoding="async" />
+      <span class="label">Trusted by</span>
+      <ul>
+        <li>California Highway Patrol</li>
+        <li>LAPD Harbor Area Division</li>
+        <li>Port of Los Angeles Police</li>
+        <li>LA County Sheriff's Dept.</li>
+      </ul>
+    </div>
+  </section>
+
+  {/* 3. STATS */}
+  <section class="band band-white band-tight">
+    <div class="wrap">
+      <div class="stats">
+        <div class="stat">
+          <b>1978</b>
+          <span>Towing in Southern California for nearly 50 years</span>
+        </div>
+        <div class="stat">
+          <b>24/7</b>
+          <span>Dispatch staffed every hour, 365 days a year</span>
+        </div>
+        <div class="stat">
+          <b>~160</b>
+          <span>Vehicles in our gated, monitored storage yard</span>
+        </div>
+        <div class="stat">
+          <b>2</b>
+          <span>Yards: Wilmington HQ and Bell Gardens</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* 4. SERVICES */}
+  <section class="band band-concrete" id="services" aria-labelledby="services-heading">
+    <div class="wrap">
+      <div class="section-head split">
+        <div>
+          <p class="eyebrow">What we do</p>
+          <h2 id="services-heading">Towing, recovery and storage under one roof</h2>
+        </div>
+        <p class="muted">From a dead battery in a Torrance parking lot to a jackknifed trailer on the 710, we send the right truck and a California-licensed operator who has done it before.</p>
+      </div>
+      <div class="svc-grid">
+        {primaryServices.map((s) => <ServiceCard service={s} />)}
+      </div>
+      <p class="eyebrow" style="margin-top:2.5rem">More services</p>
+      <div class="chips" style="margin-top:.75rem">
+        {moreServices.map((s) => (
+          <a href={`/services/${s.slug}/`} class="chip">{s.name}</a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* 5. PROCESS */}
+  <section class="band band-dark speed" aria-labelledby="process-heading">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">What happens when you call</p>
+        <h2 id="process-heading">From your call to a hook-up</h2>
+      </div>
+      <ol class="steps">
+        <li>
+          <h3>Call dispatch</h3>
+          <p>A live dispatcher answers at (310) 856-1980, day or night.</p>
+        </li>
+        <li>
+          <h3>Tell us where and what</h3>
+          <p>Your exact location, the vehicle and what happened, so we send the right truck.</p>
+        </li>
+        <li>
+          <h3>Truck dispatched</h3>
+          <p>The closest available operator heads out from Wilmington or Bell Gardens with an estimated arrival time.</p>
+        </li>
+        <li>
+          <h3>Delivered or stored</h3>
+          <p>We take the vehicle where you need it, or to our secure yard until you're ready.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  {/* 6. PORT / HEAVY DUTY */}
+  <section class="band band-white" aria-labelledby="port-heading">
+    <div class="wrap split">
+      <div class="frame" style="aspect-ratio:16/10">
+        <Img src="heavy-wrecker-crop" alt="Seventh Street Garage heavy-duty rotator wrecker" />
+        <span class="badge">Heavy duty · Class 6–8</span>
+      </div>
+      <div>
+        <p class="eyebrow">Port corridor specialists</p>
+        <h2 id="port-heading">Next door to the busiest ports in America</h2>
+        <p class="lead muted">Our Wilmington yard sits between the Port of Los Angeles and the Port of Long Beach. When a drayage tractor, chassis or loaded trailer goes down on the 710, the 110 or the Terminal Island Freeway, we're already close.</p>
+        <ul class="ticks">
+          <li>Semi and tractor-trailer towing</li>
+          <li>Bus, motor coach and RV towing</li>
+          <li>Equipment and container hauling</li>
+          <li>Fleet accounts for trucking companies</li>
+        </ul>
+        <a href="/services/heavy-duty-towing/" class="btn btn-navy" style="margin-top:1.5rem">Heavy-duty towing &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  {/* 7. SERVICE AREA */}
+  <section class="band band-concrete" id="service-area" aria-labelledby="area-heading">
+    <div class="wrap">
+      <div class="section-head split">
+        <div>
+          <p class="eyebrow">Service area</p>
+          <h2 id="area-heading">From the Harbor to the 57/60</h2>
+        </div>
+        <p class="muted">We cover {cityCount} cities and communities across Los Angeles County, northern Orange County and Chino Hills. Pick your city for local details.</p>
+      </div>
+      <ServiceArea />
+    </div>
+  </section>
+
+  {/* 8. VIDEOS */}
+  <section class="band band-dark" id="videos" aria-labelledby="videos-heading">
+    <div class="wrap">
+      <div class="section-head split">
+        <div>
+          <p class="eyebrow">On the job</p>
+          <h2 id="videos-heading">See the crew at work</h2>
+        </div>
+        <p class="muted">Follow us on <a href={SITE.instagram} rel="noopener" target="_blank">Instagram @7thstreetgarageinc</a> for photos from the road, the yards and the auction.</p>
+      </div>
+      <div class="video-grid">
+        {VIDEOS.map((v) => {
+          const hasSource = Boolean(v.youtube || v.mp4);
+          return (
+            <div
+              class="v"
+              data-youtube={v.youtube || undefined}
+              data-mp4={v.mp4 || undefined}
+            >
+              <Img src={v.poster} alt={v.title} />
+              <button type="button" aria-label={`Play video: ${v.title}`} disabled={!hasSource}>
+                <span class="play"><Icon name="play" /></span>
+                {!hasSource && <span class="soon">Video coming soon</span>}
+                <span class="vt">{v.title}</span>
+                <span>{v.desc}</span>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  {/* 9. GOOGLE REVIEWS */}
+  <section class="band band-white" id="reviews" aria-labelledby="reviews-heading">
+    <div class="wrap">
+      <div class="reviews-head">
+        <div>
+          <p class="eyebrow">Google reviews</p>
+          <h2 id="reviews-heading">What drivers say about us</h2>
+        </div>
+        <a href={SITE.gmaps} class="g-badge" rel="noopener" target="_blank">
+          <svg class="g" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38z"/></svg>
+          <span><b>Read all reviews on Google</b><small>Google Maps</small></span>
+        </a>
+      </div>
+      <div class="reviews" data-reviews data-min="4" data-max="6">
+        {[0, 1, 2].map(() => (
+          <article class="review skeleton" aria-hidden="true">
+            <div class="stars">★★★★★</div>
+            <div class="bar"></div>
+            <div class="bar s"></div>
+            <footer><span class="av">★</span><span>Loading…</span></footer>
+          </article>
+        ))}
+      </div>
+      <p class="reviews-note" data-reviews-placeholder>Live Google reviews will appear here once the Google Places connection is set up.</p>
+      <p class="reviews-note" data-reviews-note hidden>Showing recent 4- and 5-star reviews from Google. <a href={SITE.gmaps} rel="noopener" target="_blank">See all reviews on Google</a>.</p>
+    </div>
+  </section>
+
+  {/* 10. FAQ */}
+  <section class="band band-concrete" id="faq" aria-labelledby="faq-heading">
+    <div class="wrap">
+      <div class="section-head split">
+        <div>
+          <p class="eyebrow">FAQ</p>
+          <h2 id="faq-heading">Common questions</h2>
+        </div>
+        <p class="muted">Have a different question? See our <a href="/faq/">full FAQ page</a>.</p>
+      </div>
+      <FaqList faqs={HOME_FAQ} openFirst={true} />
+    </div>
+  </section>
+</Base>

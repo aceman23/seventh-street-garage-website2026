@@ -1,0 +1,29 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+
+import type { Node } from '@/lib/schema';
+
+const graph: Node[] = [];
+---
+<Base
+  title="Page Not Found | Seventh Street Garage"
+  description="This page could not be found."
+  path="/404/"
+  noindex
+  graph={graph}
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+    ]}
+    eyebrow="Error 404"
+    h1="This page got towed"
+    lead={"The page you're looking for isn't here. Try our <a href=\"/services/\">services</a> or <a href=\"/service-areas/\">service areas</a>, or call dispatch at <a href=\"tel:+13108561980\">(310) 856-1980</a>."}
+  />
+  <section class="band band-concrete">
+    <div class="wrap" style="text-align:center;padding:2rem 0">
+      <a href="/" class="btn btn-amber">Back to home</a>
+    </div>
+  </section>
+</Base>

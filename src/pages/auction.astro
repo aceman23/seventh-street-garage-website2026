@@ -1,0 +1,91 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import FaqList from '@/components/FaqList.astro';
+import CallCard from '@/components/CallCard.astro';
+import Img from '@/components/Img.astro';
+import { SITE } from '@/data/site';
+import { AUCTION_FAQ } from '@/data/faqs';
+import { webPage, faqPage } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const graph: Node[] = [
+  webPage(
+    '/auction/',
+    'Public Car Auction | Police Impound Vehicles',
+    'Seventh Street Garage public police impound car auction every other Monday at 701 Sanford Ave, Wilmington, CA. Registration 8:30am, bidding 10am, cash only.',
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Auction', path: '/auction/' },
+    ],
+  ),
+  faqPage(AUCTION_FAQ, '/auction/'),
+];
+
+const auctionImages = Array.from({ length: 12 }, (_, i) =>
+  `auction/auction-${String(i + 1).padStart(2, '0')}`,
+);
+---
+<Base
+  title="Public Car Auction | Police Impound Vehicles, Wilmington CA"
+  description="Seventh Street Garage public police impound car auction every other Monday at 701 Sanford Ave, Wilmington, CA. Registration 8:30am, bidding 10am, cash only."
+  path="/auction/"
+  graph={graph}
+  active="auction"
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Auction', path: '/auction/' },
+    ]}
+    eyebrow="Police impound · Public car auction"
+    h1="Public vehicle auction in Wilmington"
+    lead="Seventh Street Garage holds a public auction of police impound and lien sale vehicles every other Monday at 701 Sanford Ave, Wilmington, CA 90744. Registration opens at 8:30am and bidding starts at 10:00am. Bring your driver's license. Winning bids are paid in full, cash only."
+  />
+
+  <section class="band band-concrete" aria-labelledby="auction-info-heading">
+    <div class="wrap">
+      <h2 id="auction-info-heading" class="sr-only">Auction details</h2>
+      <div class="auction-meta">
+        <div class="meta-card">
+          <span class="k">When</span>
+          <b>Every other Monday</b>
+          <span>Registration 8:30am · Bidding 10:00am</span>
+        </div>
+        <div class="meta-card">
+          <span class="k">Where</span>
+          <b>701 Sanford Ave</b>
+          <span>Wilmington, CA 90744 · <a href="https://www.google.com/maps/search/?api=1&query=701+Sanford+Ave+Wilmington+CA+90744" rel="noopener" target="_blank">Map</a></span>
+        </div>
+        <div class="meta-card">
+          <span class="k">Payment</span>
+          <b>Cash only</b>
+          <span>Paid in full at time of purchase</span>
+        </div>
+      </div>
+
+      <h2 style="margin-top:2.5rem">From recent auctions</h2>
+      <p class="muted">Follow us on <a href={SITE.instagram} rel="noopener" target="_blank">Instagram @7thstreetgarageinc</a> for auction announcements and photos.</p>
+      <div class="gallery">
+        {auctionImages.map((src) => (
+          <Img src={src} alt="Vehicle from a past Seventh Street Garage auction" />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-white" aria-labelledby="faq-heading">
+    <div class="wrap">
+      <div class="article-grid">
+        <div>
+          <h2 id="faq-heading">Auction FAQ</h2>
+          <FaqList faqs={AUCTION_FAQ} openFirst={true} />
+          <p class="note">Auction schedule can change. Confirm the next sale date by phone or on Instagram before you come.</p>
+        </div>
+        <aside class="sidebar">
+          <CallCard />
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,60 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import { SITE } from '@/data/site';
+import { webPage } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const graph: Node[] = [
+  webPage(
+    '/privacy/',
+    'Privacy Policy',
+    'Privacy policy for seventhstreetgarage.com: information you give us, analytics and cookies, third-party content, and contact details.',
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Privacy', path: '/privacy/' },
+    ],
+  ),
+];
+---
+<Base
+  title="Privacy Policy | Seventh Street Garage"
+  description="Privacy policy for seventhstreetgarage.com: information you give us, analytics and cookies, third-party content, and contact details."
+  path="/privacy/"
+  graph={graph}
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Privacy', path: '/privacy/' },
+    ]}
+    eyebrow="Legal"
+    h1="Privacy policy"
+    lead="Draft for legal review."
+  />
+
+  <section class="band band-concrete">
+    <div class="wrap">
+      <div class="article prose" style="max-width:42rem">
+        <p class="note" style="margin-bottom:2rem">Draft for legal review. This text has not been reviewed by an attorney.</p>
+
+        <h2>Information you give us</h2>
+        <p>When you call our dispatch line, fill out a form on this website, or visit our yard to claim a vehicle, you may share your name, phone number, email address, driver's license number, vehicle information, and property address. We use this information to provide towing, roadside assistance, vehicle release and private property towing services, and to respond to your inquiries. We do not sell your personal information.</p>
+
+        <h2>Analytics and cookies</h2>
+        <p>This website may use analytics tools to understand how visitors use the site so we can improve it. These tools may set cookies on your browser. You can control cookies through your browser settings. We do not use cookies to identify you personally.</p>
+
+        <h2>Third-party content</h2>
+        <p>This site displays Google reviews and may embed YouTube videos. Google and YouTube set their own cookies and have their own privacy policies. When you interact with that content, you are subject to their terms and policies, not ours.</p>
+
+        <h2>Contact</h2>
+        <p>Questions about this policy? Call us at {SITE.phone} or write to:</p>
+        <address>
+          {SITE.legalName}<br />
+          1615 E Mauretania St<br />
+          Wilmington, CA 90744
+        </address>
+      </div>
+    </div>
+  </section>
+</Base>

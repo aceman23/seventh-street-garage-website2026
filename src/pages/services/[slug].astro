@@ -1,0 +1,144 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import Glance from '@/components/Glance.astro';
+import ServiceCard from '@/components/ServiceCard.astro';
+import FaqList from '@/components/FaqList.astro';
+import CallCard from '@/components/CallCard.astro';
+import SideList from '@/components/SideList.astro';
+import PrivatePropertyForm from '@/components/PrivatePropertyForm.astro';
+import { SERVICES } from '@/data/services';
+import type { Service } from '@/data/types';
+import { webPage, faqPage, service as serviceSchema } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+export function getStaticPaths() {
+  return SERVICES.map((s) => ({
+    params: { slug: s.slug },
+    props: { service: s },
+  }));
+}
+
+interface Props {
+  service: Service;
+}
+
+const { service } = Astro.props;
+
+const childServices = service.children
+  .map((slug) => SERVICES.find((s) => s.slug === slug))
+  .filter((s): s is Service => Boolean(s));
+
+const popularAreas = [
+  { slug: 'wilmington', label: 'Wilmington' },
+  { slug: 'san-pedro', label: 'San Pedro' },
+  { slug: 'long-beach', label: 'Long Beach' },
+  { slug: 'carson', label: 'Carson' },
+  { slug: 'torrance', label: 'Torrance' },
+  { slug: 'compton', label: 'Compton' },
+  { slug: 'downey', label: 'Downey' },
+  { slug: 'anaheim', label: 'Anaheim' },
+];
+
+const relatedServices = service.related
+  .map((slug) => SERVICES.find((s) => s.slug === slug))
+  .filter((s): s is Service => Boolean(s));
+
+const isLowres = service.img === 'light-duty-tow-truck';
+
+const graph: Node[] = [
+  webPage(
+    `/services/${service.slug}/`,
+    service.name,
+    service.desc,
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Services', path: '/services/' },
+      { name: service.name, path: `/services/${service.slug}/` },
+    ],
+  ),
+  serviceSchema(service),
+  faqPage(service.faqs, `/services/${service.slug}/`),
+];
+---
+<Base
+  title={service.title}
+  description={service.desc}
+  path={`/services/${service.slug}/`}
+  graph={graph}
+  active="areas"
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Services', path: '/services/' },
+      { name: service.name, path: `/services/${service.slug}/` },
+    ]}
+    eyebrow={service.eyebrow}
+    h1={service.h1}
+    lead={service.intro}
+    image={service.img}
+    imageAlt={service.img_alt}
+    wide={service.wide}
+    lowres={isLowres}
+  />
+
+  <section class="band band-concrete">
+    <div class="wrap">
+      <Glance facts={service.facts} />
+
+      <div class="article-grid mt-2">
+        <article class="article prose" style="max-width:none">
+          {service.sections.map((sec) => (
+            <>
+              <h2>{sec.heading}</h2>
+              <div set:html={sec.html} />
+            </>
+          ))}
+
+          {childServices.length > 0 && (
+            <>
+              <h2>Roadside services</h2>
+              <div class="svc-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                {childServices.map((s) => <ServiceCard service={s} />)}
+              </div>
+            </>
+          )}
+
+          <div class="includes">
+            <h2>What's included</h2>
+            <ul class="ticks cols-2">
+              {service.includes.map((item) => <li>{item}</li>)}
+            </ul>
+          </div>
+
+          {service.hasForm && <PrivatePropertyForm />}
+
+          <h2 id="faq">{service.name} FAQ</h2>
+          <FaqList faqs={service.faqs} openFirst={true} />
+        </article>
+
+        <aside class="sidebar">
+          <CallCard />
+          <SideList
+            title="Related services"
+            links={relatedServices.map((s) => ({
+              label: s.name,
+              href: `/services/${s.slug}/`,
+            }))}
+          />
+          <SideList
+            title="Popular service areas"
+            links={[
+              ...popularAreas.map((a) => ({
+                label: a.label,
+                href: `/service-areas/${a.slug}/`,
+              })),
+              { label: 'All 50 areas →', href: '/service-areas/' },
+            ]}
+          />
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>

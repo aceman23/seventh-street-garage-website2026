@@ -1,0 +1,327 @@
+// Seventh Street Garage — site script (typed, no dependencies)
+type Slides = HTMLElement[];
+type DotEls = HTMLButtonElement[];
+
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- mobile nav + services menu ---------- */
+function initNav(): void {
+  const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
+  const nav = document.getElementById('site-nav');
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => {
+      const open = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      document.body.style.overflow = open ? 'hidden' : '';
+    });
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.nav-trigger').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const li = btn.closest('.has-menu');
+      if (!li) return;
+      const open = li.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll<HTMLElement>('.has-menu.open').forEach((li) => {
+      li.classList.remove('open');
+      const b = li.querySelector<HTMLButtonElement>('.nav-trigger');
+      if (b) b.setAttribute('aria-expanded', 'false');
+    });
+  });
+}
+
+/* ---------- hero carousel ---------- */
+interface CarouselState {
+  idx: number;
+  timer: number | null;
+  paused: boolean;
+}
+
+function initCarousel(car: HTMLElement): void {
+  const trackEl = car.querySelector<HTMLElement>('.car-track')!;
+  if (!trackEl) return;
+  const slides: Slides = Array.from(car.querySelectorAll<HTMLElement>('.slide'));
+  const dotsWrap = car.querySelector<HTMLElement>('.car-dots');
+  if (!dotsWrap || slides.length === 0) return;
+
+  const dur = parseInt(car.getAttribute('data-interval') ?? '6000', 10);
+  car.style.setProperty('--dur', `${dur}ms`);
+
+  const state: CarouselState = { idx: 0, timer: null, paused: reduce };
+  if (reduce) car.classList.add('paused');
+
+  const dots: DotEls = slides.map((_, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', `Show slide ${i + 1} of ${slides.length}`);
+    b.addEventListener('click', () => go(i, true));
+    dotsWrap.appendChild(b);
+    return b;
+  });
+
+  function mark(i: number): void {
+    dots.forEach((d, j) => {
+      d.removeAttribute('aria-current');
+      if (j === i) {
+        void d.offsetWidth;
+        d.setAttribute('aria-current', 'true');
+      }
+    });
+    slides.forEach((s, j) => {
+      s.setAttribute('aria-hidden', j === i ? 'false' : 'true');
+      s.querySelectorAll<HTMLAnchorElement>('a').forEach((a) => {
+        a.tabIndex = j === i ? 0 : -1;
+      });
+    });
+  }
+
+  function go(i: number, user = false): void {
+    state.idx = ((i % slides.length) + slides.length) % slides.length;
+    trackEl.scrollTo({
+      left: trackEl.clientWidth * state.idx,
+      behavior: reduce ? 'auto' : 'smooth',
+    });
+    mark(state.idx);
+    if (user) restart();
+  }
+
+  function restart(): void {
+    if (state.timer !== null) clearInterval(state.timer);
+    if (!state.paused) {
+      state.timer = window.setInterval(() => go(state.idx + 1), dur);
+    }
+  }
+
+  const prev = car.querySelector<HTMLButtonElement>('[data-prev]');
+  const next = car.querySelector<HTMLButtonElement>('[data-next]');
+  prev?.addEventListener('click', () => go(state.idx - 1, true));
+  next?.addEventListener('click', () => go(state.idx + 1, true));
+
+  car.addEventListener('mouseenter', () => {
+    state.paused = true;
+    car.classList.add('paused');
+    if (state.timer !== null) clearInterval(state.timer);
+  });
+  car.addEventListener('mouseleave', () => {
+    if (!reduce) {
+      state.paused = false;
+      car.classList.remove('paused');
+      restart();
+    }
+  });
+  car.addEventListener('focusin', () => {
+    state.paused = true;
+    car.classList.add('paused');
+    if (state.timer !== null) clearInterval(state.timer);
+  });
+
+  let st: number | undefined;
+  trackEl.addEventListener(
+    'scroll',
+    () => {
+      if (st !== undefined) clearTimeout(st);
+      st = window.setTimeout(() => {
+        const i = Math.round(trackEl.scrollLeft / trackEl.clientWidth);
+        if (i !== state.idx) {
+          state.idx = i;
+          mark(state.idx);
+          restart();
+        }
+      }, 120);
+    },
+    { passive: true },
+  );
+
+  car.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'ArrowRight') go(state.idx + 1, true);
+    if (e.key === 'ArrowLeft') go(state.idx - 1, true);
+  });
+
+  mark(0);
+  restart();
+}
+
+/* ---------- Google reviews ---------- */
+interface ReviewData {
+  rating: number;
+  text: string;
+  author?: string;
+  time?: number;
+  photo?: string;
+  relativeTime?: string;
+}
+interface ReviewsResponse {
+  reviews: ReviewData[];
+}
+
+function initReviews(): void {
+  const rv = document.querySelector<HTMLElement>('[data-reviews]');
+  if (!rv || !window.fetch) return;
+  const min = parseInt(rv.getAttribute('data-min') ?? '4', 10);
+  const max = parseInt(rv.getAttribute('data-max') ?? '6', 10);
+
+  fetch('/data/reviews.json', { cache: 'no-cache' })
+    .then((r): Promise<ReviewsResponse | null> =>
+      r.ok ? (r.json() as Promise<ReviewsResponse>) : Promise.resolve(null),
+    )
+    .then((data) => {
+      if (!data || !Array.isArray(data.reviews)) return;
+      const list = data.reviews
+        .filter((r) => Number(r.rating) >= min && r.text)
+        .sort((a, b) => (b.time ?? 0) - (a.time ?? 0))
+        .slice(0, max);
+      if (!list.length) return;
+
+      rv.innerHTML = '';
+      list.forEach((r) => {
+        const art = document.createElement('article');
+        art.className = 'review';
+
+        const stars = document.createElement('div');
+        stars.className = 'stars';
+        stars.setAttribute('aria-label', `${r.rating} out of 5 stars`);
+        const rounded = Math.round(r.rating);
+        stars.textContent = '★★★★★'.slice(0, rounded) + '☆☆☆☆☆'.slice(0, 5 - rounded);
+
+        const q = document.createElement('blockquote');
+        q.textContent = r.text.length > 360 ? r.text.slice(0, 357).trim() + '…' : r.text;
+
+        const f = document.createElement('footer');
+        const av = document.createElement('span');
+        av.className = 'av';
+        if (r.photo) {
+          const im = document.createElement('img');
+          im.src = r.photo;
+          im.alt = '';
+          im.loading = 'lazy';
+          im.referrerPolicy = 'no-referrer';
+          av.appendChild(im);
+        } else {
+          av.textContent = (r.author ?? '?').charAt(0);
+        }
+
+        const who = document.createElement('span');
+        const b = document.createElement('b');
+        b.textContent = r.author ?? 'Google user';
+        const sm = document.createElement('small');
+        sm.textContent = `${r.relativeTime ?? ''} · Google`;
+        who.appendChild(b);
+        who.appendChild(document.createElement('br'));
+        who.appendChild(sm);
+
+        f.appendChild(av);
+        f.appendChild(who);
+        art.appendChild(stars);
+        art.appendChild(q);
+        art.appendChild(f);
+        rv.appendChild(art);
+      });
+
+      const note = document.querySelector<HTMLElement>('[data-reviews-note]');
+      if (note) note.hidden = false;
+      const ph = document.querySelector<HTMLElement>('[data-reviews-placeholder]');
+      if (ph) ph.hidden = true;
+    })
+    .catch(() => {});
+}
+
+/* ---------- video slots (click-to-load facade) ---------- */
+function initVideos(): void {
+  document
+    .querySelectorAll<HTMLElement>('.v[data-youtube], .v[data-mp4]')
+    .forEach((v) => {
+      const yt = v.getAttribute('data-youtube');
+      const mp4 = v.getAttribute('data-mp4');
+      const btn = v.querySelector<HTMLButtonElement>('button');
+      if (!btn) return;
+      if (!yt && !mp4) {
+        btn.disabled = true;
+        return;
+      }
+      btn.addEventListener('click', () => {
+        let el: HTMLIFrameElement | HTMLVideoElement;
+        if (yt) {
+          el = document.createElement('iframe');
+          el.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(yt)}?autoplay=1&rel=0`;
+          el.allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture';
+          el.allowFullscreen = true;
+          el.title = btn.getAttribute('aria-label') ?? 'Video';
+        } else {
+          el = document.createElement('video');
+          el.src = mp4 ?? '';
+          el.controls = true;
+          el.autoplay = true;
+          el.playsInline = true;
+        }
+        v.innerHTML = '';
+        v.appendChild(el);
+      });
+    });
+}
+
+/* ---------- forms ---------- */
+function initForms(): void {
+  document.querySelectorAll<HTMLFormElement>('form[data-form]').forEach((form) => {
+    form.addEventListener('submit', (e: Event) => {
+      e.preventDefault();
+      const status = form.querySelector<HTMLElement>('.status');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      const endpoint = form.getAttribute('data-endpoint');
+      if (status) status.hidden = false;
+      if (!endpoint) {
+        if (status)
+          status.textContent =
+            'Online requests are not connected yet. Please call dispatch at (310) 856-1980.';
+        return;
+      }
+      if (status) status.textContent = 'Sending…';
+      fetch(endpoint, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' },
+      })
+        .then((r) => {
+          if (!r.ok) throw new Error('Request failed');
+          if (status)
+            status.textContent =
+              'Request received. Our office will contact you. For a tow right now, call (310) 856-1980.';
+          form.reset();
+        })
+        .catch(() => {
+          if (status)
+            status.textContent =
+              'We could not send your request. Please call (310) 856-1980.';
+        });
+    });
+  });
+}
+
+/* ---------- footer year ---------- */
+function initYear(): void {
+  const y = document.querySelector<HTMLElement>('[data-year]');
+  if (y) y.textContent = String(new Date().getFullYear());
+}
+
+/* ---------- run ---------- */
+function init(): void {
+  initNav();
+  document.querySelectorAll<HTMLElement>('[data-carousel]').forEach(initCarousel);
+  initReviews();
+  initVideos();
+  initForms();
+  initYear();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

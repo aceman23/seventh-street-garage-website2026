@@ -1,0 +1,13 @@
+---
+import type { Fact } from '@/data/types';
+interface Props { facts: Fact[] }
+const { facts } = Astro.props;
+---
+<dl class="glance">
+  {facts.map((f) => (
+    <div>
+      <dt>{f.label}</dt>
+      <dd>{f.value}</dd>
+    </div>
+  ))}
+</dl>

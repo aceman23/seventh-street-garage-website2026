@@ -1,0 +1,77 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import ServiceCard from '@/components/ServiceCard.astro';
+import { SERVICES } from '@/data/services';
+import type { ServiceGroup } from '@/data/types';
+import { webPage } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const GROUP_ORDER: { group: ServiceGroup; label: string }[] = [
+  { group: 'Towing', label: 'Towing & recovery' },
+  { group: 'Roadside', label: 'Roadside assistance' },
+  { group: 'Hauling', label: 'Equipment hauling' },
+  { group: 'Property', label: 'Property owners' },
+  { group: 'Agency', label: 'Public agencies' },
+  { group: 'Storage', label: 'Storage' },
+];
+
+const grouped = GROUP_ORDER.map(({ group, label }) => ({
+  label,
+  services: SERVICES.filter((s) => s.group === group),
+})).filter((g) => g.services.length > 0);
+
+const itemList: Node = {
+  '@type': 'ItemList',
+  itemListElement: SERVICES.map((s, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    url: `/services/${s.slug}/`,
+    name: s.name,
+  })),
+};
+
+const graph: Node[] = [
+  webPage(
+    '/services/',
+    'Towing & Roadside Services',
+    '24/7 car towing, heavy-duty towing, equipment hauling, roadside assistance, accident recovery, private property towing, impound and storage in LA & OC.',
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Services', path: '/services/' },
+    ],
+    'CollectionPage',
+  ),
+  itemList,
+];
+---
+<Base
+  title="Towing & Roadside Services in Los Angeles"
+  description="24/7 car towing, heavy-duty towing, equipment hauling, roadside assistance, accident recovery, private property towing, impound and storage in LA & OC."
+  path="/services/"
+  graph={graph}
+  active="areas"
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Services', path: '/services/' },
+    ]}
+    eyebrow="Services"
+    h1="Towing &amp; roadside services"
+    lead="Every service is dispatched 24/7 from our Wilmington and Bell Gardens yards. Call (310) 856-1980 or choose a service below."
+  />
+  <section class="band band-concrete" aria-labelledby="all-services-heading">
+    <div class="wrap">
+      <h2 id="all-services-heading" class="sr-only">All services</h2>
+      {grouped.map((g) => (
+        <div style="margin-bottom:2.5rem">
+          <p class="eyebrow" style="margin-bottom:1rem">{g.label}</p>
+          <div class="svc-grid">
+            {g.services.map((s) => <ServiceCard service={s} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+</Base>

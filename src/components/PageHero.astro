@@ -1,0 +1,38 @@
+---
+import { SITE } from '@/data/site';
+import Breadcrumbs from './Breadcrumbs.astro';
+import Img from './Img.astro';
+
+interface Props {
+  crumbs: { name: string; path: string }[];
+  eyebrow: string;
+  h1: string;
+  lead?: string;
+  image?: string;
+  imageAlt?: string;
+  wide?: boolean;
+  lowres?: boolean;
+}
+const { crumbs, eyebrow, h1, lead, image, imageAlt, wide, lowres } = Astro.props;
+---
+<section class="page-hero speed">
+  <div class="wrap">
+    <Breadcrumbs items={crumbs} />
+    <div class={`page-hero-grid${image ? '' : ' solo'}`}>
+      <div>
+        <p class="eyebrow">{eyebrow}</p>
+        <h1 set:html={h1} />
+        {lead && <p class="lead" set:html={lead} />}
+        <div class="btn-row">
+          <a href={`tel:${SITE.tel}`} class="btn btn-amber">Call {SITE.phone}</a>
+          <a href="/contact/#request" class="btn btn-ghost">Request service</a>
+        </div>
+      </div>
+      {image && (
+        <div class={`frame${wide ? ' wide' : ''}${lowres ? ' lowres' : ''}`}>
+          <Img src={image} alt={imageAlt ?? ''} eager />
+        </div>
+      )}
+    </div>
+  </div>
+</section>

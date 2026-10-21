@@ -1,0 +1,220 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import Glance from '@/components/Glance.astro';
+import FaqList from '@/components/FaqList.astro';
+import CallCard from '@/components/CallCard.astro';
+import SideList from '@/components/SideList.astro';
+import { getCities } from '@/lib/geo';
+import { YARDS } from '@/data/cities';
+import { SERVICES } from '@/data/services';
+import type { City, Faq, Fact } from '@/data/types';
+import { webPage, faqPage, locationId } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const HERO_IMAGES = [
+  'night-tow-truck',
+  'police-suv-flatbed',
+  'jump-start',
+  'heavy-wrecker-square',
+  'impound-gate',
+  'wilmington-hq-crop',
+];
+
+const SERVICE_SLUGS = [
+  'towing',
+  'heavy-duty-towing',
+  'roadside-assistance',
+  'jump-starts',
+  'lockout-service',
+  'tire-changes',
+  'accident-recovery',
+  'private-property-towing',
+  'heavy-equipment-hauling',
+  'motorcycle-towing',
+];
+
+export function getStaticPaths() {
+  const cities = getCities();
+  return cities.map((c, i) => ({
+    params: { slug: c.slug },
+    props: { city: c, index: i },
+  }));
+}
+
+interface Props {
+  city: City;
+  index: number;
+}
+
+const { city, index } = Astro.props;
+
+const name = city.name;
+const short = name.includes(' & ') ? name.split(' & ')[0] : name;
+const y = YARDS[city.yard];
+const mi = Math.round(city.yardMiles);
+const here = city.slug === 'wilmington' || city.slug === 'bell-gardens';
+
+const distTxt = here
+  ? `Our ${y.name} yard is right here in ${name}.`
+  : `${name} is about ${mi} miles (straight line) from our ${y.name} yard at ${y.addr}.`;
+
+function joinList(items: string[]): string {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+const fwNames = city.freeways.map((f) => f.replace(' (nearby)', ''));
+const firstTokens = city.freeways.slice(0, 3).map((f) => f.split(' ')[0]);
+const mainRoutes = firstTokens.join(', ');
+
+const serviceLinks = SERVICE_SLUGS.map((slug) => {
+  const s = SERVICES.find((sv) => sv.slug === slug);
+  return s ? { name: s.name, slug } : null;
+}).filter((s): s is { name: string; slug: string } => Boolean(s));
+
+const faqs: Faq[] = [
+  {
+    q: `Do you offer 24-hour towing in ${short}?`,
+    a: `Yes. Seventh Street Garage dispatches tow trucks to ${name} 24 hours a day, 7 days a week. Call (310) 856-1980.`,
+  },
+  {
+    q: `Where are tow trucks dispatched from for ${short}?`,
+    a: here
+      ? `Calls in ${name} are usually covered from our ${y.name} yard at ${y.addr}, ${y.city}, CA ${y.zip}. The dispatcher will give you an estimated arrival time when you call.`
+      : `Calls in ${name} are usually covered from our ${y.name} yard at ${y.addr}, ${y.city}, CA ${y.zip}. That is about ${mi} miles away in a straight line. The dispatcher will give you an estimated arrival time when you call.`,
+  },
+  {
+    q: `Can you tow semi trucks and commercial vehicles in ${short}?`,
+    a: `Yes. We send heavy-duty wreckers for semis, buses, RVs and box trucks in ${name}, including on the ${joinList(fwNames.slice(0, 2))}.`,
+  },
+  {
+    q: `My car was towed in ${short}. Is it at your yard?`,
+    a: `If it was towed by Seventh Street Garage, call (310) 856-1980 with the plate or VIN to confirm. The registered owner can claim it 8am–5pm with a driver's license, proof of ownership and payment.`,
+  },
+];
+
+const facts: Fact[] = [
+  { label: 'Nearest yard', value: y.label },
+  { label: 'Distance', value: here ? 'In the city' : `About ${mi} mi (straight line)` },
+  { label: 'Main routes', value: mainRoutes },
+  { label: 'Dispatch', value: '24/7/365 · (310) 856-1980' },
+];
+
+const heroImage = HERO_IMAGES[index % HERO_IMAGES.length];
+
+const nearbyLinks = city.nearby.map((slug) => {
+  const c = getCities().find((ci) => ci.slug === slug);
+  return c ? { label: `Towing in ${c.name}`, href: `/service-areas/${slug}/` } : null;
+}).filter((l): l is { label: string; href: string } => Boolean(l));
+
+const url = `/service-areas/${city.slug}/`;
+
+const cityNode: Node = {
+  '@type': 'Service',
+  '@id': `${url}#service`,
+  name: `Towing and roadside assistance in ${name}, CA`,
+  serviceType: 'Towing',
+  provider: { '@id': locationId(city.yard) },
+  areaServed: {
+    '@type': 'City',
+    name: `${name}, CA`,
+    containedInPlace: {
+      '@type': 'AdministrativeArea',
+      name: `${city.county} County, CA`,
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: city.lat,
+      longitude: city.lng,
+    },
+  },
+  url: `https://www.seventhstreetgarage.com${url}`,
+  availableChannel: {
+    '@type': 'ServiceChannel',
+    serviceUrl: `https://www.seventhstreetgarage.com${url}`,
+    servicePhone: {
+      '@type': 'ContactPoint',
+      telephone: '+13108561980',
+      contactType: 'dispatch',
+      hoursAvailable: 'Mo-Su 00:00-23:59',
+    },
+  },
+};
+
+const graph: Node[] = [
+  webPage(
+    url,
+    `${short} Towing & Roadside Assistance 24/7`,
+    `24/7 towing, roadside help and heavy-duty recovery in ${name}, CA, dispatched from our ${y.name} yard. Call (310) 856-1980.`,
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Service Areas', path: '/service-areas/' },
+      { name, path: url },
+    ],
+  ),
+  cityNode,
+  faqPage(faqs, url),
+];
+---
+<Base
+  title={`${short} Towing & Roadside Assistance 24/7`}
+  description={`24/7 towing, roadside help and heavy-duty recovery in ${name}, CA, dispatched from our ${y.name} yard. Call (310) 856-1980.`}
+  path={url}
+  graph={graph}
+  active="areas"
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Service Areas', path: '/service-areas/' },
+      { name, path: url },
+    ]}
+    eyebrow={`${city.county} County · ${city.region}`}
+    h1={`Towing &amp; roadside assistance in ${name}, CA`}
+    lead={`Seventh Street Garage provides 24/7 towing, roadside assistance and heavy-duty recovery in ${name}. ${distTxt} Call (310) 856-1980 and a live dispatcher will send the nearest truck.`}
+    image={heroImage}
+    imageAlt={`Seventh Street Garage tow truck serving ${name}, CA`}
+  />
+
+  <section class="band band-concrete">
+    <div class="wrap">
+      <Glance facts={facts} />
+
+      <div class="article-grid mt-2">
+        <article class="article prose" style="max-width:none">
+          <h2>Towing and roadside help in {name}</h2>
+          <p>{city.note} Whether you're near {joinList(city.landmarks)}, broken down on the {joinList(fwNames)}, or stuck in a driveway or parking lot, our California-licensed operators bring the right truck: a flatbed for AWD, EV and high-value vehicles, a wheel-lift for tight parking, or a heavy wrecker for trucks and buses.</p>
+          <p>Seventh Street Garage has towed in Southern California since 1978. We are the LAPD Official Police Garage for the South LA / Harbor area and a CHP Rotation Tow participant, and every {short} customer gets the same crews and standards.</p>
+
+          <h2>Services in {name}</h2>
+          <ul class="ticks cols-2">
+            {serviceLinks.map((s) => (
+              <li><a href={`/services/${s.slug}/`}>{s.name} in {short}</a></li>
+            ))}
+          </ul>
+
+          <h2>Freeways and roads we cover in {short}</h2>
+          <ul class="ticks">
+            {city.freeways.map((f) => <li>{f}</li>)}
+          </ul>
+          <p class="note">If you're broken down on a freeway, pull to the right shoulder, turn on your hazards and stay in your vehicle with your seatbelt on. Call 911 if anyone is hurt.</p>
+
+          <h2>If your vehicle was towed in {short}</h2>
+          <p>Call (310) 856-1980 with the year, make, model and plate or VIN to confirm whether we have it. The registered owner can claim it at our office 8am–5pm. <a href="/vehicle-release/">Read the vehicle release steps</a>.</p>
+
+          <h2 id="faq">{short} towing FAQ</h2>
+          <FaqList faqs={faqs} openFirst={true} />
+        </article>
+
+        <aside class="sidebar">
+          <CallCard />
+          <SideList title="Nearby areas" links={nearbyLinks} />
+          <SideList title="All service areas" links={[{ label: 'All service areas →', href: '/service-areas/' }]} />
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>

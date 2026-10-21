@@ -1,0 +1,57 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import ServiceArea from '@/components/ServiceArea.astro';
+import { getCities } from '@/lib/geo';
+import { webPage } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const cities = getCities();
+
+const itemList: Node = {
+  '@type': 'ItemList',
+  itemListElement: cities.map((c, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    url: `/service-areas/${c.slug}/`,
+    name: c.name,
+  })),
+};
+
+const graph: Node[] = [
+  webPage(
+    '/service-areas/',
+    'Towing Service Areas',
+    '24/7 towing and roadside assistance in 50 cities across LA County, Orange County and Chino Hills, from yards in Wilmington and Bell Gardens.',
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Service Areas', path: '/service-areas/' },
+    ],
+    'CollectionPage',
+  ),
+  itemList,
+];
+---
+<Base
+  title="Towing Service Areas | LA & Orange County"
+  description="24/7 towing and roadside assistance in 50 cities across LA County, Orange County and Chino Hills, from yards in Wilmington and Bell Gardens."
+  path="/service-areas/"
+  graph={graph}
+  active="areas"
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Service Areas', path: '/service-areas/' },
+    ]}
+    eyebrow="Service areas"
+    h1="Towing service areas"
+    lead="We dispatch from two yards: our Wilmington headquarters near the Port of Los Angeles and our Bell Gardens yard by the I-5 and I-710. Pick your city below for local details, or call (310) 856-1980."
+  />
+  <section class="band band-concrete" aria-labelledby="areas-heading">
+    <div class="wrap">
+      <h2 id="areas-heading" class="sr-only">All service areas</h2>
+      <ServiceArea />
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,49 @@
+---
+import Img from './Img.astro';
+import Icon from './Icon.astro';
+
+interface Slide {
+  img: string;
+  alt: string;
+  kicker: string;
+  title: string;
+  href: string;
+}
+
+interface Props {
+  slides: Slide[];
+  interval?: number;
+}
+
+const { slides, interval = 6000 } = Astro.props;
+---
+<div
+  class="carousel"
+  data-carousel
+  data-interval={interval}
+  aria-roledescription="carousel"
+  aria-label="Seventh Street Garage services"
+>
+  <div class="car-track" tabindex="0">
+    {slides.map((s, i) => (
+      <figure class="slide" aria-hidden={i === 0 ? 'false' : 'true'} aria-label={`Slide ${i + 1} of ${slides.length}: ${s.title}`}>
+        <Img src={s.img} alt={s.alt} eager={i === 0} />
+        <figcaption>
+          <a href={s.href} tabindex={i === 0 ? 0 : -1}>
+            <span class="kicker">{s.kicker}</span>
+            <span class="s-title">{s.title}</span>
+          </a>
+        </figcaption>
+      </figure>
+    ))}
+  </div>
+  <div class="car-ui">
+    <button class="car-btn" data-prev type="button" aria-label="Previous slide">
+      <Icon name="left" />
+    </button>
+    <div class="car-dots" role="tablist" aria-label="Slide selector"></div>
+    <button class="car-btn" data-next type="button" aria-label="Next slide">
+      <Icon name="right" />
+    </button>
+  </div>
+</div>

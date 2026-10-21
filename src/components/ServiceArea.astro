@@ -1,0 +1,41 @@
+---
+import { SITE } from '@/data/site';
+import { YARDS } from '@/data/cities';
+import { citiesByRegion } from '@/lib/geo';
+import Img from './Img.astro';
+
+const regions = citiesByRegion();
+const yardKeys = Object.keys(YARDS) as (keyof typeof YARDS)[];
+---
+<div class="area-grid">
+  <figure class="map-frame">
+    <Img src="service-area-map" alt="Map showing Seventh Street Garage coverage area across Los Angeles and northern Orange County" />
+    <figcaption>
+      <span>Coverage from the coast to Chino Hills</span>
+      <a href={SITE.gmaps} rel="noopener" target="_blank">Open in Google Maps</a>
+    </figcaption>
+  </figure>
+  <div>
+    {regions.map((r) => (
+      <section class="region" aria-labelledby={`region-${r.region.replace(/\s+/g, '-').toLowerCase()}`}>
+        <h3 id={`region-${r.region.replace(/\s+/g, '-').toLowerCase()}`}>{r.region}</h3>
+        <div class="city-links">
+          {r.cities.map((c) => (
+            <a href={`/service-areas/${c.slug}/`}>{c.name}</a>
+          ))}
+        </div>
+      </section>
+    ))}
+    <div class="yards">
+      {yardKeys.map((k) => (
+        <div class="yard">
+          <span class="k">{YARDS[k].label}</span>
+          <address>
+            {YARDS[k].addr}<br />
+            {YARDS[k].city}, CA {YARDS[k].zip}
+          </address>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>

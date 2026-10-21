@@ -1,0 +1,14 @@
+---
+import { SITE } from '@/data/site';
+import Icon from './Icon.astro';
+---
+<section class="cta-band">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">Stuck right now?</p>
+      <h2>Call 24/7 dispatch</h2>
+    </div>
+    <a href={`tel:${SITE.tel}`} class="big">{SITE.phone}</a>
+    <a href={`tel:${SITE.tel}`} class="btn btn-navy"><Icon name="phone" /> Call for a tow</a>
+  </div>
+</section>

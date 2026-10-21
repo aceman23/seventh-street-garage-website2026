@@ -1,0 +1,71 @@
+---
+import { SITE } from '@/data/site';
+import type { Node } from '@/lib/schema';
+import { baseGraph } from '@/lib/schema';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  ogImage?: string;
+  noindex?: boolean;
+  graph?: Node[];
+}
+
+const {
+  title,
+  description,
+  path,
+  ogImage = '/images/og-seventh-street-garage.jpg',
+  noindex = false,
+  graph = [],
+} = Astro.props;
+
+const BRAND = 'Seventh Street Garage';
+let fullTitle = title;
+if (!title.includes(BRAND) && `${title} | ${BRAND}`.length <= 66) {
+  fullTitle = `${title} | ${BRAND}`;
+}
+const canonical = `${SITE.url}${path}`;
+const ogImgAbs = ogImage.startsWith('http') ? ogImage : `${SITE.url}${ogImage}`;
+
+const robots = noindex
+  ? 'noindex, follow'
+  : 'index, follow, max-image-preview:large, max-snippet:-1';
+
+const graphNodes = [...baseGraph(), ...graph];
+---
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<meta name="robots" content={robots} />
+<meta name="theme-color" content="#0A1020" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={BRAND} />
+<meta property="og:locale" content="en_US" />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImgAbs} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImgAbs} />
+<meta name="geo.region" content="US-CA" />
+<meta name="geo.position" content="33.7790;-118.2445" />
+<meta name="ICBM" content="33.7790, -118.2445" />
+<link rel="alternate" type="text/plain" title="LLM summary" href="/llms.txt" />
+<link rel="icon" href="/favicon.svg" />
+<link rel="manifest" href="/site.webmanifest" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,100..125,600..900;1,100..125,600..900&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+/>
+<script
+  type="application/ld+json"
+  set:html={JSON.stringify({ '@context': 'https://schema.org', '@graph': graphNodes })}
+/>

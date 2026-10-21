@@ -1,0 +1,18 @@
+---
+import type { Service } from '@/data/types';
+import Img from './Img.astro';
+
+interface Props { service: Service }
+const { service } = Astro.props;
+---
+<a href={`/services/${service.slug}/`} class="svc-card">
+  <div class="ph">
+    <Img src={service.img} alt={service.img_alt} />
+  </div>
+  <div class="body">
+    <span class="tagline">{service.eyebrow}</span>
+    <h3>{service.name}</h3>
+    <p>{service.card}</p>
+    <span class="go">View service &rarr;</span>
+  </div>
+</a>

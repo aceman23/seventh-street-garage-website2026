@@ -1,0 +1,119 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import CallCard from '@/components/CallCard.astro';
+import SideList from '@/components/SideList.astro';
+import Img from '@/components/Img.astro';
+import Icon from '@/components/Icon.astro';
+import { SITE } from '@/data/site';
+import { YARDS } from '@/data/cities';
+import { SERVICES } from '@/data/services';
+import { webPage } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const graph: Node[] = [
+  webPage(
+    '/contact/',
+    'Contact Seventh Street Garage',
+    'Contact Seventh Street Garage: 24/7 dispatch (310) 856-1980. Wilmington HQ at 1615 E Mauretania St and Bell Gardens yard at 7535 Scout Ave.',
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Contact', path: '/contact/' },
+    ],
+    'ContactPage',
+  ),
+];
+
+const yardKeys = Object.keys(YARDS) as (keyof typeof YARDS)[];
+
+const serviceOptions = SERVICES.map((s) => s.name).concat([
+  'Fleet / commercial account',
+  'Other',
+]);
+---
+<Base
+  title="Contact Us | 24/7 Dispatch (310) 856-1980"
+  description="Contact Seventh Street Garage: 24/7 dispatch (310) 856-1980. Wilmington HQ at 1615 E Mauretania St and Bell Gardens yard at 7535 Scout Ave."
+  path="/contact/"
+  graph={graph}
+  active="contact"
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Contact', path: '/contact/' },
+    ]}
+    eyebrow="Contact"
+    h1="Contact dispatch"
+    lead="For a tow or roadside help right now, call (310) 856-1980. Dispatch answers 24 hours a day. For quotes, fleet accounts and property towing, use the form."
+  />
+
+  <section class="band band-concrete">
+    <div class="wrap">
+      <div class="article-grid">
+        <div>
+          <h2 id="request">Request service or a quote</h2>
+          <form class="form" data-form data-endpoint={SITE.formEndpoint} novalidate>
+            <div class="row">
+              <label for="c-name">Name <span aria-hidden="true">*</span></label>
+              <label for="c-phone">Phone <span aria-hidden="true">*</span></label>
+            </div>
+            <div class="row">
+              <input id="c-name" name="name" type="text" required autocomplete="name" placeholder="Your name" />
+              <input id="c-phone" name="phone" type="tel" required autocomplete="tel" placeholder="(310) 555-0100" />
+            </div>
+            <label for="c-email">Email</label>
+            <input id="c-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+            <label for="c-service">Service</label>
+            <select id="c-service" name="service">
+              {serviceOptions.map((s) => <option value={s}>{s}</option>)}
+            </select>
+            <label for="c-pickup">Pickup location</label>
+            <input id="c-pickup" name="pickup_location" type="text" placeholder="Address, cross streets or freeway exit" />
+            <label for="c-dropoff">Drop-off (if known)</label>
+            <input id="c-dropoff" name="dropoff" type="text" placeholder="Where the vehicle should go" />
+            <label for="c-vehicle">Vehicle</label>
+            <input id="c-vehicle" name="vehicle" type="text" placeholder="Year, make, model, color" />
+            <label for="c-details">Details</label>
+            <textarea id="c-details" name="details" placeholder="Tell us what happened or what you need"></textarea>
+            <input type="hidden" name="form" value="contact" />
+            <button type="submit" class="btn btn-amber"><Icon name="phone" /> Send request</button>
+            <p class="status" role="status" hidden></p>
+            <p class="fine">Emergency? Don't wait on a form. Call (310) 856-1980.</p>
+          </form>
+        </div>
+
+        <aside class="sidebar">
+          <CallCard />
+          {yardKeys.map((k) => (
+            <div class="callout">
+              <span class="eyebrow">{YARDS[k].label}</span>
+              <address>
+                {YARDS[k].addr}<br />
+                {YARDS[k].city}, CA {YARDS[k].zip}
+              </address>
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(YARDS[k].addr + ' ' + YARDS[k].city + ' CA ' + YARDS[k].zip)}`} rel="noopener" target="_blank" class="go">Get directions &rarr;</a>
+            </div>
+          ))}
+          <SideList title="Hours" links={[
+            { label: 'Dispatch 24/7/365', href: `tel:${SITE.tel}` },
+            { label: 'Vehicle release office 8am–5pm', href: '/vehicle-release/' },
+            { label: 'Auction, every other Mon 10:00am', href: '/auction/' },
+          ]} />
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-white" aria-labelledby="map-heading">
+    <div class="wrap">
+      <h2 id="map-heading" class="sr-only">Map</h2>
+      <figure class="map-frame">
+        <a href={SITE.gmaps} rel="noopener" target="_blank">
+          <Img src="service-area-map" alt="Map showing Seventh Street Garage locations in Wilmington and Bell Gardens" />
+        </a>
+        <figcaption>1615 E Mauretania St, Wilmington, CA 90744</figcaption>
+      </figure>
+    </div>
+  </section>
+</Base>

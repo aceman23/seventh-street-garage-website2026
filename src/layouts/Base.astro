@@ -1,0 +1,40 @@
+---
+import Seo from '@/components/Seo.astro';
+import Strip from '@/components/Strip.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import CtaBand from '@/components/CtaBand.astro';
+import DispatchBar from '@/components/DispatchBar.astro';
+import '@/styles/global.css';
+import type { Node } from '@/lib/schema';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  graph?: Node[];
+  active?: 'areas' | 'release' | 'auction' | 'about' | 'contact';
+  noindex?: boolean;
+}
+const { title, description, path, graph, active, noindex } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <Seo title={title} description={description} path={path} graph={graph} noindex={noindex} />
+  </head>
+  <body>
+    <a href="#main" class="skip">Skip to content</a>
+    <Strip />
+    <Header active={active} />
+    <main id="main">
+      <slot />
+    </main>
+    <CtaBand />
+    <Footer />
+    <DispatchBar />
+    <script>
+      import '@/scripts/site.ts';
+    </script>
+  </body>
+</html>

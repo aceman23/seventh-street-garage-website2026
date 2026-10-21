@@ -1,0 +1,10 @@
+---
+import { SITE } from '@/data/site';
+import Icon from './Icon.astro';
+---
+<aside class="call-card">
+  <span class="k"><Icon name="phone" /> Dispatch is open</span>
+  <a href={`tel:${SITE.tel}`} class="num">{SITE.phone}</a>
+  <p class="muted">24 hours a day, 7 days a week, 365 days a year</p>
+  <a href={`tel:${SITE.tel}`} class="btn btn-amber">Call now</a>
+</aside>

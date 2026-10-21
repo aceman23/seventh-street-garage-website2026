@@ -1,0 +1,49 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+  eager?: boolean;
+  class?: string;
+  sizes?: string;
+}
+
+const { src, alt, eager = false, class: cls, sizes } = Astro.props;
+
+const SIZES: Record<string, { w: number; h: number; variant?: string }> = {
+  'wilmington-hq': { w: 1920, h: 720, variant: '960' },
+  'wilmington-hq-crop': { w: 720, h: 720, variant: '480' },
+  'heavy-wrecker-bell-gardens': { w: 1861, h: 476, variant: '960' },
+  'heavy-wrecker-crop': { w: 1429, h: 476, variant: '720' },
+  'heavy-wrecker-square': { w: 476, h: 476 },
+  'light-duty-tow-truck': { w: 312, h: 160 },
+  'service-area-map': { w: 1292, h: 621, variant: '800' },
+  'opg-unit-5-badge': { w: 225, h: 226 },
+  'night-tow-truck': { w: 720, h: 720, variant: '480' },
+  'police-suv-flatbed': { w: 720, h: 720, variant: '480' },
+  'jump-start': { w: 720, h: 720, variant: '480' },
+  'impound-gate': { w: 720, h: 720, variant: '480' },
+};
+
+const meta = src.startsWith('auction/')
+  ? { w: 480, h: 480 }
+  : (SIZES[src] ?? { w: 720, h: 720 });
+
+const base = `/images/${src}.webp`;
+let srcset: string | undefined;
+if (meta.variant) {
+  srcset = `${`/images/${src}-${meta.variant}.webp`} ${meta.variant}w, ${base} ${meta.w}w`;
+}
+---
+
+<img
+  src={base}
+  alt={alt}
+  width={meta.w}
+  height={meta.h}
+  srcset={srcset}
+  sizes={sizes}
+  loading={eager ? 'eager' : 'lazy'}
+  decoding="async"
+  fetchpriority={eager ? 'high' : undefined}
+  class={cls}
+/>

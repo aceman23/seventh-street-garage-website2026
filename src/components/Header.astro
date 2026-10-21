@@ -1,0 +1,57 @@
+---
+import { SITE } from '@/data/site';
+import { SERVICES, PRIMARY_SERVICES } from '@/data/services';
+import Icon from './Icon.astro';
+
+interface Props {
+  active?: 'areas' | 'release' | 'auction' | 'about' | 'contact';
+}
+const { active } = Astro.props;
+
+const navItems: { label: string; href: string; key?: string }[] = [
+  { label: 'Services', href: '/services/', key: 'services' },
+  { label: 'Service Areas', href: '/service-areas/', key: 'areas' },
+  { label: 'Claim Your Vehicle', href: '/vehicle-release/', key: 'release' },
+  { label: 'Auction', href: '/auction/', key: 'auction' },
+  { label: 'About', href: '/about/', key: 'about' },
+  { label: 'Contact', href: '/contact/', key: 'contact' },
+];
+
+const primary = PRIMARY_SERVICES.map((slug) => SERVICES.find((s) => s.slug === slug)!).filter(Boolean);
+---
+<header class="site-header">
+  <div class="wrap">
+    <a href="/" class="brand" aria-label="Seventh Street Garage home">
+      <span class="brand-lines" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="brand-text"><b>SEVENTH</b><span>Street Garage</span></span>
+    </a>
+    <button class="menu-toggle" type="button" aria-controls="site-nav" aria-expanded="false">
+      <span></span>
+    </button>
+    <nav id="site-nav" class="nav" aria-label="Primary">
+      <ul>
+        <li class="has-menu">
+          <button class="nav-trigger" type="button" aria-expanded="false">
+            Services <Icon name="down" class="nav-caret" />
+          </button>
+          <div class="mega">
+            {primary.map((s) => (
+              <a href={`/services/${s.slug}/`}>
+                {s.name}<small>{s.card}</small>
+              </a>
+            ))}
+            <a href="/services/" class="mega-all">All services & roadside &rarr;</a>
+          </div>
+        </li>
+        {navItems.map((n) => (
+          <li>
+            <a href={n.href} aria-current={active === n.key ? 'page' : undefined}>{n.label}</a>
+          </li>
+        ))}
+      </ul>
+      <a href={`tel:${SITE.tel}`} class="btn btn-amber header-cta">
+        <Icon name="phone" /> Call
+      </a>
+    </nav>
+  </div>
+</header>

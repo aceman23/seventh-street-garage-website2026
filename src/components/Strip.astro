@@ -1,0 +1,14 @@
+---
+import { SITE } from '@/data/site';
+import Icon from './Icon.astro';
+---
+<div class="strip">
+  <div class="wrap">
+    <ul>
+      <li><span class="dot"></span> Dispatch open 24/7/365</li>
+      <li class="hide-sm">LAPD Official Police Garage · Unit 5</li>
+      <li class="hide-sm">CHP Rotation Tow Program</li>
+    </ul>
+    <a href={`tel:${SITE.tel}`}><Icon name="phone" /> {SITE.phone}</a>
+  </div>
+</div>

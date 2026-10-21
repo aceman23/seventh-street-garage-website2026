@@ -1,0 +1,103 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import FaqList from '@/components/FaqList.astro';
+import CallCard from '@/components/CallCard.astro';
+import { RELEASE_FAQ } from '@/data/faqs';
+import { webPage, faqPage, howTo } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const steps = [
+  { name: 'Call dispatch', text: 'Call (310) 856-1980 with the year, make, model and plate or VIN to confirm we have the vehicle and whether there\'s a hold.' },
+  { name: 'Get any agency release', text: 'If police impounded the vehicle, you may need a release from that agency first.' },
+  { name: 'Visit the office', text: 'Come to 1615 E Mauretania St, Wilmington, 8am–5pm, with your documents and payment.' },
+  { name: 'Pick up the vehicle', text: 'Many vehicles are stored at a nearby facility, so plan a ride there after your paperwork is done.' },
+];
+
+const graph: Node[] = [
+  webPage(
+    '/vehicle-release/',
+    'Claim Your Towed or Impounded Vehicle',
+    'How to claim a towed or impounded vehicle in Wilmington: office open 8am–5pm. Bring a driver\'s license, proof of ownership and cash or card.',
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Claim Your Vehicle', path: '/vehicle-release/' },
+    ],
+  ),
+  howTo({
+    name: 'How to claim your towed or impounded vehicle',
+    description: 'Steps to claim a vehicle towed or impounded by Seventh Street Garage in Wilmington, CA.',
+    steps,
+  }),
+  faqPage(RELEASE_FAQ, '/vehicle-release/'),
+];
+---
+<Base
+  title="Claim Your Towed or Impounded Vehicle | Wilmington"
+  description="How to claim a towed or impounded vehicle in Wilmington: office open 8am–5pm. Bring a driver's license, proof of ownership and cash or card."
+  path="/vehicle-release/"
+  graph={graph}
+  active="release"
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Claim Your Vehicle', path: '/vehicle-release/' },
+    ]}
+    eyebrow="Towed or impounded"
+    h1="How to claim your vehicle"
+    lead="If Seventh Street Garage towed your vehicle, the registered owner can claim it at our Wilmington office, 1615 E Mauretania St, between 8am and 5pm. Bring a driver's license, proof of ownership and cash or a credit card. Call (310) 856-1980 first to confirm we have it."
+    image="impound-gate"
+    imageAlt="Seventh Street Garage impound gate and storage yard"
+  />
+
+  <section class="band band-concrete" aria-labelledby="bring-heading">
+    <div class="wrap">
+      <p class="eyebrow">What to bring</p>
+      <h2 id="bring-heading">Three things you need</h2>
+      <div class="need">
+        <div class="card">
+          <h3>Driver's license</h3>
+          <p>Valid photo ID for the registered owner.</p>
+        </div>
+        <div class="card">
+          <h3>Proof of ownership</h3>
+          <p>Current registration or title for the vehicle.</p>
+        </div>
+        <div class="card">
+          <h3>Payment</h3>
+          <p>Cash or credit card for towing and storage fees.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-dark" aria-labelledby="steps-heading">
+    <div class="wrap">
+      <p class="eyebrow">Step by step</p>
+      <h2 id="steps-heading">Getting your vehicle back</h2>
+      <ol class="steps">
+        {steps.map((s) => (
+          <li>
+            <h3>{s.name}</h3>
+            <p>{s.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="band band-white" aria-labelledby="faq-heading">
+    <div class="wrap">
+      <div class="article-grid">
+        <div>
+          <h2 id="faq-heading">Vehicle release FAQ</h2>
+          <FaqList faqs={RELEASE_FAQ} openFirst={true} />
+        </div>
+        <aside class="sidebar">
+          <CallCard />
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>

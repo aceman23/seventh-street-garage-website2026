@@ -1,0 +1,84 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import FaqList from '@/components/FaqList.astro';
+import { HOME_FAQ, RELEASE_FAQ, AUCTION_FAQ } from '@/data/faqs';
+import { SERVICES } from '@/data/services';
+import type { Faq } from '@/data/types';
+import { faqPage } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const serviceFaqSlugs = [
+  'towing',
+  'heavy-duty-towing',
+  'roadside-assistance',
+  'private-property-towing',
+  'police-impound-towing',
+  'heavy-equipment-hauling',
+];
+
+const serviceFaqGroups = serviceFaqSlugs
+  .map((slug) => SERVICES.find((s) => s.slug === slug))
+  .filter((s): s is NonNullable<typeof s> => Boolean(s) && (s?.faqs.length ?? 0) > 0)
+  .map((s) => ({ name: s.name, faqs: s.faqs }));
+
+function dedupeFaqs(all: Faq[]): Faq[] {
+  const seen = new Set<string>();
+  return all.filter((f) => {
+    if (seen.has(f.q)) return false;
+    seen.add(f.q);
+    return true;
+  });
+}
+
+const allFaqs = dedupeFaqs([
+  ...HOME_FAQ,
+  ...RELEASE_FAQ,
+  ...AUCTION_FAQ,
+  ...serviceFaqGroups.flatMap((g) => g.faqs),
+]);
+
+const graph: Node[] = [
+  faqPage(allFaqs, '/faq/'),
+];
+---
+<Base
+  title="Towing FAQ | Impound, Roadside, Auction"
+  description="Answers about Seventh Street Garage towing, roadside assistance, impound and vehicle release, the public auction, private property towing and service areas."
+  path="/faq/"
+  graph={graph}
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'FAQ', path: '/faq/' },
+    ]}
+    eyebrow="FAQ"
+    h1="Towing &amp; impound questions, answered"
+    lead="Can't find your answer? Call dispatch at (310) 856-1980, 24/7."
+  />
+
+  <section class="band band-concrete" aria-labelledby="faq-all-heading">
+    <div class="wrap">
+      <h2 id="faq-all-heading" class="sr-only">All frequently asked questions</h2>
+      <div class="faq-group">
+        <h2>General</h2>
+        <FaqList faqs={HOME_FAQ} />
+      </div>
+      <div class="faq-group">
+        <h2>Claiming your vehicle</h2>
+        <FaqList faqs={RELEASE_FAQ} />
+      </div>
+      <div class="faq-group">
+        <h2>Public auction</h2>
+        <FaqList faqs={AUCTION_FAQ} />
+      </div>
+      {serviceFaqGroups.map((g) => (
+        <div class="faq-group">
+          <h2>{g.name}</h2>
+          <FaqList faqs={g.faqs} />
+        </div>
+      ))}
+    </div>
+  </section>
+</Base>

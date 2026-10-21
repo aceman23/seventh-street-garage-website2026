@@ -1,0 +1,90 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import ServiceArea from '@/components/ServiceArea.astro';
+import { SITE } from '@/data/site';
+import { webPage } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const graph: Node[] = [
+  webPage(
+    '/about/',
+    'About Seventh Street Garage',
+    'Towing, recovery, impound and secure storage in Southern California since 1978. LAPD OPG Unit 5 and CHP Rotation Tow participant.',
+    [
+      { name: 'Home', path: '/' },
+      { name: 'About', path: '/about/' },
+    ],
+    'AboutPage',
+  ),
+];
+---
+<Base
+  title="About Us | Towing Since 1978"
+  description="Towing, recovery, impound and secure storage in Southern California since 1978. LAPD OPG Unit 5 and CHP Rotation Tow participant."
+  path="/about/"
+  graph={graph}
+  active="about"
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'About', path: '/about/' },
+    ]}
+    eyebrow="Serving Southern California since 1978"
+    h1="About Seventh Street Garage"
+    lead="Seventh Street Garage has provided professional towing, recovery, impound and secure vehicle storage throughout Southern California for nearly 50 years. Today we serve the California Highway Patrol, the LAPD Harbor Area Division, the Port of Los Angeles Police and the Los Angeles County Sheriff's Department."
+    image="wilmington-hq"
+    imageAlt="Seventh Street Garage headquarters in Wilmington, California"
+    wide
+  />
+
+  <section class="band band-white" aria-labelledby="opg-heading">
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow">Official Police Garage · Unit 5</p>
+        <h2 id="opg-heading">Held to the highest standard</h2>
+        <p>As the LAPD Official Police Garage for the South LA / Harbor area, we are held to strict standards of service and professionalism. We also tow for the Housing Authority of the City of Los Angeles and LADOT, and we participate in the CHP Rotation Tow Program.</p>
+        <p>Our operators undergo rigorous training and continuous skill updates. Every operator is subject to criminal background checks and drug testing. Our facilities, trucks and equipment are inspected regularly for compliance with commission requirements, and private customers get the same level of service as our agency partners.</p>
+      </div>
+      <div class="frame" style="background:#fff;padding:1.5rem;display:flex;align-items:center;justify-content:center">
+        <img src="/images/opg-unit-5-badge.webp" alt="Los Angeles Official Police Garage Unit 5 badge" width="225" height="226" loading="lazy" decoding="async" />
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-concrete" aria-labelledby="capacity-heading">
+    <div class="wrap">
+      <p class="eyebrow">Capacity</p>
+      <h2 id="capacity-heading">Towing and storage capacity</h2>
+      <div class="two-col">
+        <div class="callout">
+          <h3>Towing capacity</h3>
+          <p>A centralized dispatch center staffed 24 hours a day, 365 days a year, with experienced California-licensed tow operators handling light-, medium- and heavy-duty towing. Our fleet of light-, medium- and heavy-duty trucks is serviced regularly and equipped with modern towing and recovery tools.</p>
+        </div>
+        <div class="callout">
+          <h3>Storage capacity</h3>
+          <p>Our storage facility holds about 160 vehicles and has secured perimeter fencing, controlled-access gates, surveillance systems, LED security lighting, and designated areas for investigative and evidentiary vehicle storage.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-dark" aria-labelledby="agencies-heading">
+    <div class="wrap">
+      <p class="eyebrow">Agencies we serve</p>
+      <h2 id="agencies-heading">Public safety partners</h2>
+      <ul class="ticks cols-2">
+        {SITE.agencies.map((a) => <li>{a}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="band band-white" aria-labelledby="locations-heading">
+    <div class="wrap">
+      <p class="eyebrow">Locations</p>
+      <h2 id="locations-heading">Two yards, one dispatch</h2>
+      <ServiceArea />
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,16 @@
+{
+  "name": "Seventh Street Garage",
+  "short_name": "7th St Garage",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A1020",
+  "theme_color": "#0A1020",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

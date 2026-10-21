@@ -1,0 +1,43 @@
+---
+import { SITE } from '@/data/site';
+import Icon from './Icon.astro';
+---
+<div class="includes" style="margin-top:2.5rem">
+  <h2 id="request">Contact our private property towing manager</h2>
+  <form class="form" data-form data-endpoint={SITE.formEndpoint} novalidate>
+    <div class="row">
+      <label for="pp-name">Name <span aria-hidden="true">*</span></label>
+      <label for="pp-company">Company / property</label>
+    </div>
+    <div class="row">
+      <input id="pp-name" name="name" type="text" required autocomplete="name" placeholder="Your name" />
+      <input id="pp-company" name="company" type="text" autocomplete="organization" placeholder="Company or property name" />
+    </div>
+    <div class="row">
+      <label for="pp-email">Email <span aria-hidden="true">*</span></label>
+      <label for="pp-phone">Phone <span aria-hidden="true">*</span></label>
+    </div>
+    <div class="row">
+      <input id="pp-email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" />
+      <input id="pp-phone" name="phone" type="tel" required autocomplete="tel" placeholder="(310) 555-0100" />
+    </div>
+    <label for="pp-address">Property address <span aria-hidden="true">*</span></label>
+    <input id="pp-address" name="address" type="text" required autocomplete="street-address" placeholder="123 Main St, Los Angeles, CA" />
+    <label for="pp-type">Property type</label>
+    <select id="pp-type" name="property_type">
+      <option value="apartment">Apartment / condo</option>
+      <option value="hoa">HOA</option>
+      <option value="retail">Shopping center / retail</option>
+      <option value="office">Office</option>
+      <option value="industrial">Industrial / warehouse</option>
+      <option value="school">School / campus</option>
+      <option value="other">Other</option>
+    </select>
+    <label for="pp-details">Details</label>
+    <textarea id="pp-details" name="details" placeholder="Tell us about your property, signage, and towing needs"></textarea>
+    <input type="hidden" name="form" value="private-property" />
+    <button type="submit" class="btn btn-amber"><Icon name="phone" /> Send to property towing manager</button>
+    <p class="status" role="status" hidden></p>
+    <p class="fine">For a vehicle that needs removing right now, call (310) 856-1980.</p>
+  </form>
+</div>

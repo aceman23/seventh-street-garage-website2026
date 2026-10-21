@@ -16,12 +16,43 @@ function initNav(): void {
     });
   }
 
-  document.querySelectorAll<HTMLButtonElement>('.nav-trigger').forEach((btn) => {
-    btn.addEventListener('click', () => {
+  // Close mobile menu when any nav link is tapped
+  nav?.querySelectorAll<HTMLAnchorElement>('a:not([href^="tel"])').forEach((a) => {
+    a.addEventListener('click', () => {
+      nav.classList.remove('open');
+      toggle?.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    });
+  });
+
+  const triggers = document.querySelectorAll<HTMLButtonElement>('.nav-trigger');
+  triggers.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const li = btn.closest('.has-menu');
       if (!li) return;
-      const open = li.classList.toggle('open');
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      const wasOpen = li.classList.contains('open');
+      // Close any other open menus first
+      document.querySelectorAll<HTMLElement>('.has-menu.open').forEach((other) => {
+        if (other !== li) {
+          other.classList.remove('open');
+          const ob = other.querySelector<HTMLButtonElement>('.nav-trigger');
+          ob?.setAttribute('aria-expanded', 'false');
+        }
+      });
+      li.classList.toggle('open', !wasOpen);
+      btn.setAttribute('aria-expanded', !wasOpen ? 'true' : 'false');
+    });
+  });
+
+  // Click-away closes the dropdown
+  document.addEventListener('click', (e: MouseEvent) => {
+    document.querySelectorAll<HTMLElement>('.has-menu.open').forEach((li) => {
+      if (!li.contains(e.target as Node)) {
+        li.classList.remove('open');
+        const b = li.querySelector<HTMLButtonElement>('.nav-trigger');
+        b?.setAttribute('aria-expanded', 'false');
+      }
     });
   });
 
@@ -154,6 +185,7 @@ interface ReviewData {
   time?: number;
   photo?: string;
   relativeTime?: string;
+  reviewUrl?: string;
 }
 interface ReviewsResponse {
   reviews: ReviewData[];
@@ -181,6 +213,12 @@ function initReviews(): void {
       list.forEach((r) => {
         const art = document.createElement('article');
         art.className = 'review';
+        const link = document.createElement('a');
+        link.className = 'review-link';
+        link.href = r.reviewUrl ?? 'https://share.google/8N4ZyLwZZcBRbKcqC';
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.setAttribute('aria-label', `Read ${r.author ?? 'Google user'}'s review on Google`);
 
         const stars = document.createElement('div');
         stars.className = 'stars';
@@ -216,9 +254,10 @@ function initReviews(): void {
 
         f.appendChild(av);
         f.appendChild(who);
-        art.appendChild(stars);
-        art.appendChild(q);
-        art.appendChild(f);
+        link.appendChild(stars);
+        link.appendChild(q);
+        link.appendChild(f);
+        art.appendChild(link);
         rv.appendChild(art);
       });
 

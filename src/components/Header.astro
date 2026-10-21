@@ -4,7 +4,7 @@ import { SERVICES, PRIMARY_SERVICES } from '@/data/services';
 import Icon from './Icon.astro';
 
 interface Props {
-  active?: 'areas' | 'release' | 'auction' | 'about' | 'contact';
+  active?: 'areas' | 'services' | 'release' | 'auction' | 'about' | 'contact';
 }
 const { active } = Astro.props;
 
@@ -17,6 +17,7 @@ const navItems: { label: string; href: string; key?: string }[] = [
 ];
 
 const primary = PRIMARY_SERVICES.map((slug) => SERVICES.find((s) => s.slug === slug)!).filter(Boolean);
+const servicesActive = active === 'services';
 ---
 <header class="site-header">
   <div class="wrap">
@@ -30,7 +31,7 @@ const primary = PRIMARY_SERVICES.map((slug) => SERVICES.find((s) => s.slug === s
     <nav id="site-nav" class="nav" aria-label="Primary">
       <ul>
         <li class="has-menu">
-          <button class="nav-trigger" type="button" aria-expanded="false">
+          <button class="nav-trigger" type="button" aria-expanded="false" aria-current={servicesActive ? 'page' : undefined}>
             Services <Icon name="down" class="nav-caret" />
           </button>
           <div class="mega">

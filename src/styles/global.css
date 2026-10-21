@@ -80,7 +80,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .strip li{display:flex;align-items:center;gap:.45em}
 .strip .dot{width:8px;height:8px;border-radius:50%;background:#0f7a3a;box-shadow:0 0 0 3px rgba(15,122,58,.25);animation:pulse 2s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(15,122,58,0)}}
-.strip a{text-decoration:none;font-weight:700}
+.strip a{text-decoration:none;font-weight:700}.strip svg{width:1em;height:1em;flex:none;vertical-align:middle}
 @media (max-width:720px){.strip .hide-sm{display:none}}
 
 .site-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:rgba(10,16,32,.94);backdrop-filter:saturate(140%) blur(10px);-webkit-backdrop-filter:saturate(140%) blur(10px);color:var(--white);border-bottom:1px solid var(--line-dark)}
@@ -355,7 +355,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .sidebar{position:sticky;top:120px;display:grid;gap:1rem}
 .call-card{background:var(--ink);color:var(--white);border-radius:12px;padding:1.5rem;display:grid;gap:.8rem;position:relative;overflow:hidden}
 .call-card::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(rgba(255,184,28,.35),transparent 70%)}
-.call-card .k{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:.5em}
+.call-card .k{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:.5em}.call-card .k svg{width:1.25em;height:1.25em;flex:none}
 .call-card .num{font-family:var(--mono);font-size:1.6rem;color:var(--white);text-decoration:none;letter-spacing:-.02em}
 .side-list{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:1.25rem}
 .side-list h2{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;font-style:normal;margin-bottom:.6rem}

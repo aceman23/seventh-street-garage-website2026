@@ -265,15 +265,11 @@ for (const v of VIDEOS) {
 
   {/* 10. FAQ */}
   <section class="band band-concrete" id="faq" aria-labelledby="faq-heading">
-    <div class="wrap">
-      <div class="section-head split">
-        <div>
-          <p class="eyebrow">FAQ</p>
-          <h2 id="faq-heading">Common questions</h2>
-        </div>
-        <p class="muted">Have a different question? See our <a href="/faq/">full FAQ page</a>.</p>
-      </div>
+    <div class="wrap faq-center">
+      <p class="eyebrow">FAQ</p>
+      <h2 id="faq-heading">Common questions</h2>
       <FaqList faqs={HOME_FAQ} openFirst={true} />
+      <p class="note">Have a different question? See our <a href="/faq/">full FAQ page</a>.</p>
     </div>
   </section>
 </Base>

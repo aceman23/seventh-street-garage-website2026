@@ -205,8 +205,6 @@ const graph: Node[] = [
           <h2>If your vehicle was towed in {short}</h2>
           <p>Call (310) 856-1980 with the year, make, model and plate or VIN to confirm whether we have it. The registered owner can claim it at our office 8am–5pm. <a href="/vehicle-release/">Read the vehicle release steps</a>.</p>
 
-          <h2 id="faq">{short} towing FAQ</h2>
-          <FaqList faqs={faqs} openFirst={true} />
         </article>
 
         <aside class="sidebar">
@@ -215,6 +213,13 @@ const graph: Node[] = [
           <SideList title="All service areas" links={[{ label: 'All service areas →', href: '/service-areas/' }]} />
         </aside>
       </div>
+    </div>
+  </section>
+
+  <section class="band band-white" aria-labelledby="faq">
+    <div class="wrap faq-center">
+      <h2 id="faq">{short} towing FAQ</h2>
+      <FaqList faqs={faqs} openFirst={true} />
     </div>
   </section>
 </Base>

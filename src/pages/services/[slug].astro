@@ -113,9 +113,6 @@ const graph: Node[] = [
           </div>
 
           {service.hasForm && <PrivatePropertyForm />}
-
-          <h2 id="faq">{service.name} FAQ</h2>
-          <FaqList faqs={service.faqs} openFirst={true} />
         </article>
 
         <aside class="sidebar">
@@ -139,6 +136,13 @@ const graph: Node[] = [
           />
         </aside>
       </div>
+    </div>
+  </section>
+
+  <section class="band band-concrete" aria-labelledby="faq">
+    <div class="wrap faq-center">
+      <h2 id="faq">{service.name} FAQ</h2>
+      <FaqList faqs={service.faqs} openFirst={true} />
     </div>
   </section>
 </Base>

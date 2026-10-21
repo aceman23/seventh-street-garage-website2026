@@ -307,7 +307,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .reviews-note{margin-top:1.25rem;font-size:.88rem;color:var(--muted)}
 
 /* FAQ */
-.faq{display:grid;gap:.6rem;max-width:880px}
+.faq{display:grid;gap:.6rem;max-width:880px;margin-inline:auto}
 .faq details{background:var(--white);border:1px solid var(--line);border-radius:8px;transition:border-color .2s}
 .faq details[open]{border-color:var(--navy)}
 .faq summary{cursor:pointer;list-style:none;padding:1.1rem 3.2rem 1.1rem 1.25rem;font-family:var(--display);font-weight:750;font-stretch:104%;font-size:1.06rem;position:relative;line-height:1.3}

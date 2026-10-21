@@ -88,15 +88,11 @@ const graph: Node[] = [
   </section>
 
   <section class="band band-white" aria-labelledby="faq-heading">
-    <div class="wrap">
-      <div class="article-grid">
-        <div>
-          <h2 id="faq-heading">Vehicle release FAQ</h2>
-          <FaqList faqs={RELEASE_FAQ} openFirst={true} />
-        </div>
-        <aside class="sidebar">
-          <CallCard />
-        </aside>
+    <div class="wrap faq-center">
+      <h2 id="faq-heading">Vehicle release FAQ</h2>
+      <FaqList faqs={RELEASE_FAQ} openFirst={true} />
+      <div class="faq-center-cta">
+        <CallCard />
       </div>
     </div>
   </section>

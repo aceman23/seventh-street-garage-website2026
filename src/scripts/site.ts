@@ -22,6 +22,11 @@ function initNav(): void {
       nav.classList.remove('open');
       toggle?.setAttribute('aria-expanded', 'false');
       document.body.style.overflow = '';
+      document.querySelectorAll<HTMLElement>('.has-menu.open').forEach((li) => {
+        li.classList.remove('open');
+        const b = li.querySelector<HTMLButtonElement>('.nav-trigger');
+        b?.setAttribute('aria-expanded', 'false');
+      });
     });
   });
 
@@ -58,6 +63,9 @@ function initNav(): void {
 
   document.addEventListener('keydown', (e: KeyboardEvent) => {
     if (e.key !== 'Escape') return;
+    nav?.classList.remove('open');
+    toggle?.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
     document.querySelectorAll<HTMLElement>('.has-menu.open').forEach((li) => {
       li.classList.remove('open');
       const b = li.querySelector<HTMLButtonElement>('.nav-trigger');

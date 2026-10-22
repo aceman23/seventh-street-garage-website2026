@@ -100,6 +100,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .nav a,.nav button.nav-trigger{font-family:var(--body);font-weight:650;font-size:.91rem;letter-spacing:.01em;color:#F4F6FA;text-decoration:none;padding:.55rem .62rem;border-radius:5px;background:none;border:0;cursor:pointer;display:flex;align-items:center;gap:.35em;transition:color .15s ease,background .15s ease}
 .nav a:hover,.nav button.nav-trigger:hover,.nav a[aria-current="page"],.nav button.nav-trigger[aria-current="page"]{background:rgba(255,255,255,.07);color:var(--amber)}
 .has-menu{position:relative}
+.nav-caret{width:14px;height:14px;transition:transform .2s ease}
 .mega{position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);width:min(720px,92vw);background:var(--white);color:var(--text);border-radius:10px;box-shadow:0 30px 60px -20px rgba(10,16,32,.55);padding:1.25rem;display:none;grid-template-columns:1fr 1fr;gap:.25rem 1.25rem}
 .has-menu.open .mega,.has-menu:focus-within .mega{display:grid}
 .mega::before{content:"";position:absolute;inset:-12px 0 auto;height:12px}
@@ -116,15 +117,22 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .menu-toggle span,.menu-toggle span::before,.menu-toggle span::after{display:block;width:20px;height:2px;background:currentColor;margin:auto;position:relative;transition:.2s}
 .menu-toggle span::before,.menu-toggle span::after{content:"";position:absolute;left:0}
 .menu-toggle span::before{top:-6px}.menu-toggle span::after{top:6px}
+.menu-toggle[aria-expanded="true"] span{background:transparent}
+.menu-toggle[aria-expanded="true"] span::before{top:0;transform:rotate(45deg)}
+.menu-toggle[aria-expanded="true"] span::after{top:0;transform:rotate(-45deg)}
+.has-menu.open .nav-caret{transform:rotate(180deg)}
 @media (max-width:1060px){
   .menu-toggle{display:block}
-  .nav{position:fixed;inset:calc(112px + env(safe-area-inset-top,0px)) 0 0 0;background:var(--ink);flex-direction:column;align-items:stretch;padding:1rem var(--gutter-r) 6rem var(--gutter);overflow:auto;display:none;margin:0}
+  .nav{position:absolute;top:100%;left:0;right:0;height:calc(100dvh - 112px);background:var(--ink);flex-direction:column;align-items:stretch;padding:1.25rem var(--gutter-r) 5rem var(--gutter);overflow-y:auto;display:none;margin:0;border-top:1px solid var(--line-dark);box-shadow:0 24px 40px -28px rgba(0,0,0,.8)}
   .nav.open{display:flex}
-  .nav>ul{flex-direction:column}
-  .nav a,.nav button.nav-trigger{font-size:1.15rem;padding:.85rem .5rem;border-bottom:1px solid var(--line-dark);border-radius:0;width:100%}
-  .mega{position:static;transform:none;width:auto;box-shadow:none;background:transparent;color:var(--white);padding:0 0 .5rem 1rem;grid-template-columns:1fr}
-  .has-menu:hover .mega{display:none}
+  .nav>ul{flex-direction:column;gap:.25rem}
+  .nav a,.nav button.nav-trigger{font-size:1.15rem;line-height:1.35;padding:1rem .65rem;border-bottom:1px solid var(--line-dark);border-radius:0;width:100%}
+  .nav button.nav-trigger{justify-content:space-between}
+  .mega{position:static;transform:none;width:auto;box-shadow:none;background:transparent;color:var(--white);padding:.35rem 0 .75rem 1rem;grid-template-columns:1fr}
+  .has-menu:hover .mega,.has-menu:focus-within .mega{display:none}
   .has-menu.open .mega{display:grid}
+  .mega a{padding:.8rem .65rem}
+  .mega a small{margin-top:.2rem}
   .mega a{color:var(--white);border-bottom:0;font-size:1rem}
   .mega a small{color:var(--mist)}
   .mega a:hover{background:rgba(255,255,255,.06);color:var(--amber)}
@@ -454,7 +462,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   .brand-lines{width:26px}
   .brand-text b{font-size:1.2rem}
   .brand-text span{font-size:.58rem;letter-spacing:.18em}
-  .nav{inset:calc(104px + env(safe-area-inset-top,0px)) 0 0 0}
+  .nav{top:100%;left:0;right:0;height:calc(100dvh - 104px);bottom:auto}
   .hero,.page-hero{padding-block:2.25rem 3rem}
   .hero h1,.page-hero h1{font-size:clamp(2.05rem,11vw,3.4rem);line-height:1.04}
   .hero .btn-row,.page-hero .btn-row{display:grid;grid-template-columns:1fr;gap:.65rem}

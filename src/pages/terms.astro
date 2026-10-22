@@ -1,0 +1,100 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import { SITE } from '@/data/site';
+import { webPage } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const description = 'Terms of Service for Seventh Street Garage, including website use, service requests, responsibilities, liability limits and disputes.';
+
+const graph: Node[] = [
+  webPage(
+    '/terms/',
+    'Terms of Service',
+    description,
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Terms of Service', path: '/terms/' },
+    ],
+  ),
+];
+---
+<Base
+  title="Terms of Service | Seventh Street Garage"
+  description={description}
+  path="/terms/"
+  graph={graph}
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Terms of Service', path: '/terms/' },
+    ]}
+    eyebrow="Legal"
+    h1="Terms of service"
+    lead="Please review these terms before using this website or requesting service."
+  />
+
+  <section class="band band-concrete">
+    <div class="wrap">
+      <div class="article prose" style="max-width:42rem">
+        <p class="note" style="margin-bottom:2rem">Template for legal review. These terms should be reviewed and approved by an attorney before publication.</p>
+
+        <p><strong>Effective date:</strong> October 22, 2026</p>
+        <p>These Terms of Service govern your use of {SITE.url} and your requests for towing, roadside assistance, vehicle recovery, impound, storage, vehicle release, auction and related services from {SITE.legalName} ("Seventh Street Garage," "we," "us" or "our"). By using this website, submitting information through it, or requesting our services, you agree to these terms.</p>
+
+        <h2>1. Using this website</h2>
+        <p>You may use this website for lawful personal or business purposes, including learning about our services, contacting dispatch, requesting a quote, locating a yard, or reviewing vehicle-release and auction information. Website information is general information and does not replace a service agreement, written quote, official notice, law-enforcement instruction, or advice from a qualified professional.</p>
+
+        <h2>2. User responsibilities</h2>
+        <p>You are responsible for providing information that is accurate, current and complete when you contact us or submit a request. You must have authority to provide information about a vehicle, property or organization you identify. You are responsible for following our instructions, bringing required identification and ownership documents, paying applicable charges, and ensuring that you have a safe way to receive communications from us.</p>
+        <p>If you are requesting service for someone else, you represent that you are authorized to do so. We may rely on information and instructions provided by you, subject to applicable law and our verification requirements.</p>
+
+        <h2>3. Acceptable use</h2>
+        <p>You may not use this website or our forms to:</p>
+        <ul>
+          <li>Break the law, impersonate another person, or submit information without authorization.</li>
+          <li>Interfere with the website, probe or defeat its security, or introduce malicious code.</li>
+          <li>Harvest contact details, copy content for a competing service, or send spam or misleading requests.</li>
+          <li>Submit threatening, abusive, defamatory, fraudulent or knowingly false content.</li>
+          <li>Use the website in a way that could disrupt dispatch, yard operations, emergency communications or another person's access to the site.</li>
+        </ul>
+        <p>We may refuse, limit or suspend website access or a request that violates these terms or creates a safety, security or legal concern.</p>
+
+        <h2>4. Service requests, estimates and charges</h2>
+        <p>A website request is not a guaranteed appointment or acceptance of a job. Service availability, arrival times, routes, equipment and pricing may depend on location, traffic, weather, vehicle condition, required equipment, property access, applicable law and information available when the request is made. A dispatcher or authorized representative will confirm the applicable details before or during service.</p>
+        <p>Charges may include towing, recovery, labor, mileage, storage, administrative, release, after-hours, special-equipment and other applicable fees. The terms provided at the time of service, the signed work order, posted yard rules, official notices and applicable law control if they differ from general website information.</p>
+
+        <h2>5. Intellectual property</h2>
+        <p>The website, including its text, branding, logos, photographs, graphics, layout and software, belongs to Seventh Street Garage or its licensors and is protected by applicable intellectual-property laws. We grant you a limited, revocable, non-exclusive right to view and use the website for its intended purpose. You may not reproduce, modify, distribute, sell, publicly display, create derivative works from, or commercially exploit website content without our prior written permission, except where the law allows it.</p>
+        <p>You retain ownership of information you submit, but you grant us permission to use it as reasonably necessary to respond to you, provide requested services, operate the website, comply with law and protect our rights.</p>
+
+        <h2>6. Third-party services and links</h2>
+        <p>The website may link to or display content from third parties, including maps, reviews, social networks and video providers. Those services are controlled by their respective providers and may have separate terms and privacy policies. We are not responsible for third-party availability, content, accuracy, security or practices.</p>
+
+        <h2>7. Disclaimers</h2>
+        <p>To the extent permitted by law, the website and its content are provided on an "as available" basis without a promise that they will always be uninterrupted, current, complete or error-free. We do not guarantee a particular response time, service result, route, price or availability through the website. Nothing in these terms limits rights or protections that cannot legally be waived.</p>
+
+        <h2>8. Limitations of liability</h2>
+        <p>To the extent permitted by law, Seventh Street Garage and its owners, employees, agents and service providers will not be liable for indirect, incidental, special, consequential or punitive damages, lost profits, lost data, missed appointments or business interruption arising from website use or inability to use the website. Our liability for a claim relating solely to the website will not exceed the amount you paid to use the website during the six months before the event giving rise to the claim.</p>
+        <p>These limitations do not apply to liability that cannot be limited under applicable law, including liability for fraud, willful misconduct or certain personal-injury claims. Services may also be governed by separate written terms and applicable transportation, storage, lien, consumer-protection and other laws.</p>
+
+        <h2>9. Indemnification</h2>
+        <p>To the extent permitted by law, you agree to reimburse and protect Seventh Street Garage and its personnel from claims, losses, damages, liabilities and reasonable costs arising from your unlawful use of the website, your violation of these terms, or your unauthorized submission of another person's information.</p>
+
+        <h2>10. Dispute resolution</h2>
+        <p>Before filing a legal claim, please contact us at {SITE.phone} and give us a reasonable opportunity to review and resolve the concern. To the extent permitted by law, these terms are governed by California law, without regard to conflict-of-law rules. Any court proceeding relating to these terms or the website must be brought in a state or federal court serving Los Angeles County, California, unless applicable law requires another forum.</p>
+        <p>Nothing in this section prevents you from using a small-claims court when eligible, reporting a matter to a government agency, or exercising a right that cannot legally be waived. Any arbitration requirement, class-action waiver or other dispute process for a specific service should appear in the applicable service agreement and should be reviewed by counsel before use.</p>
+
+        <h2>11. Changes and contact</h2>
+        <p>We may update these terms by posting a revised version on this page. The revised effective date will appear above. If a provision is found unenforceable, the remaining provisions will continue to apply to the extent allowed by law.</p>
+        <p>Questions about these terms? Call {SITE.phone} or write to:</p>
+        <address>
+          {SITE.legalName}<br />
+          1615 E Mauretania St<br />
+          Wilmington, CA 90744
+        </address>
+      </div>
+    </div>
+  </section>
+</Base>

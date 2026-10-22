@@ -17,6 +17,7 @@ interface Props {
 
 const { slides, interval = 6000 } = Astro.props;
 ---
+{slides[0] && <link rel="preload" as="image" href={`/images/${slides[0].img}.webp`} />}
 <div
   class="carousel"
   data-carousel

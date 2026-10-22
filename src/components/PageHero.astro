@@ -15,6 +15,7 @@ interface Props {
 }
 const { crumbs, eyebrow, h1, lead, image, imageAlt, wide, lowres } = Astro.props;
 ---
+{image && <link rel="preload" as="image" href={`/images/${image}.webp`} />}
 <section class="page-hero speed">
   <div class="wrap">
     <Breadcrumbs items={crumbs} />

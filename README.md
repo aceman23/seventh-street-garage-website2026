@@ -15,9 +15,11 @@ npm run dev
 
 - `src/data/` — all content (services, 50 cities, FAQs, site config) as typed TypeScript. Source of truth.
 - `src/styles/global.css` — the design system.
+- `src/styles/admin.css` — admin panel styles.
 - `public/images/` — optimized WebP photos.
-- `src/pages/` — home, services, service areas (50 city pages), about, contact, vehicle release, auction, FAQ, privacy, 404.
+- `src/pages/` — home, services, service areas (50 city pages), about, contact, vehicle release, auction, FAQ, privacy, 404, admin.
 - `src/pages/robots.txt.ts`, `llms.txt.ts`, `llms-full.txt.ts` — machine-readable endpoints.
+- `src/lib/supabase.ts` — Supabase client and shared types.
 - `public/site.webmanifest` — PWA manifest.
 - `scripts/fetch-reviews.ts` — pulls Google Places reviews into `public/data/reviews.json`.
 
@@ -33,12 +35,46 @@ The API key is only used server-side in the script and in the GitHub Action — 
 
 ## Contact forms
 
-The contact and private-property forms post `FormData` to the URL in `SITE.formEndpoint` (`src/data/site.ts`) with `Accept: application/json`.
+The contact and private-property forms save submissions directly to the Supabase `inquiries` table. If `SITE.formEndpoint` is set in `src/data/site.ts`, the form posts to that URL instead (Formspree, Netlify Functions, etc.) and still saves to the database.
 
-- **Formspree:** paste your Formspree endpoint URL (e.g. `https://formspree.io/f/xxxxxxx`) into `SITE.formEndpoint`.
-- **Netlify Functions:** deploy a serverless function and set `SITE.formEndpoint` to its path (e.g. `/.netlify/functions/contact`).
+Submissions appear in the admin panel under **Inquiries**, where staff can view details, change status (new/read/replied), reply by email or phone, delete entries, and export all inquiries as CSV.
 
-While `SITE.formEndpoint` is empty, the form shows: "Online requests are not connected yet. Please call dispatch at (310) 856-1980." No fake success messages are ever shown.
+## Admin panel
+
+The admin panel at `/admin` is gated behind Supabase email/password authentication. It is excluded from search engines via `noindex`.
+
+### Modules
+
+- **Inquiries** — contact form submissions with status tracking, CSV export, and quick reply links.
+- **FAQs** — add, edit, delete, and reorder frequently asked questions by category (home, vehicle release, auction) with draft/published toggles.
+- **Settings** — key-value store for site configuration, API keys, and notification settings.
+
+### Email notifications
+
+When a new inquiry is inserted into the database, a Postgres trigger fires an HTTP request to the `notify-inquiry` edge function, which sends a branded email alert via [Resend](https://resend.com).
+
+To activate:
+
+1. Sign in to the admin panel at `/admin`.
+2. Go to **Settings** and find the **Email Notifications** card.
+3. Enter the notification email address and a Resend API key.
+4. Save — every new inquiry will trigger an email automatically.
+
+The edge function reads both values from the `settings` table at runtime, so they can be changed without touching code.
+
+### Database
+
+Supabase provides the database, auth, and edge function hosting. The following tables are used:
+
+| Table | Purpose |
+| --- | --- |
+| `inquiries` | Contact form submissions |
+| `faqs` | FAQ content managed from admin |
+| `settings` | Key-value config (notification email, API keys) |
+
+Row-level security is enabled on all tables. Public visitors can only insert inquiries; all other operations require authentication.
+
+Migrations are in `supabase/migrations/` and edge function source is in `supabase/functions/notify-inquiry/`.
 
 ## Deploying
 
@@ -52,4 +88,8 @@ Vercel auto-detects Astro. Import the repo and deploy. The build command (`npm r
 
 ## Sitemap
 
-The `@astrojs/sitemap` integration generates `sitemap-index.xml` at build time. The 404 page is filtered out via the `filter` option in `astro.config.mjs`.
+The `@astrojs/sitemap` integration generates `sitemap-index.xml` at build time. All routes are included automatically — new pages appear in the sitemap on the next build. The 404 page is filtered out via the `filter` option in `astro.config.mjs`.
+
+## robots.txt
+
+A dynamic route (`src/pages/robots.txt.ts`) generates `robots.txt` at build time. It allows all crawlers, blocks the `/data/` directory, explicitly allowlists major AI/search bots, and points to the sitemap index.

@@ -312,41 +312,76 @@ function initVideos(): void {
 }
 
 /* ---------- forms ---------- */
+async function submitToSupabase(form: HTMLFormElement): Promise<boolean> {
+  const fd = new FormData(form);
+  const formType = (fd.get('form') as string) || 'contact';
+  const payload: Record<string, string | null> = {
+    name: (fd.get('name') as string) ?? null,
+    email: (fd.get('email') as string) ?? null,
+    phone: (fd.get('phone') as string) ?? null,
+    service: (fd.get('service') as string) ?? null,
+    pickup_location: (fd.get('pickup_location') as string) ?? null,
+    vehicle: (fd.get('vehicle') as string) ?? null,
+    details: (fd.get('details') as string) ?? null,
+    form_type: formType,
+  };
+  if (formType === 'private-property') {
+    payload.service = (fd.get('property_type') as string) ?? null;
+    payload.pickup_location = (fd.get('address') as string) ?? null;
+  }
+  if (!payload.name || !payload.email) return false;
+  try {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!url || !anonKey) return false;
+    const res = await fetch(`${url}/rest/v1/inquiries`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(payload),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 function initForms(): void {
   document.querySelectorAll<HTMLFormElement>('form[data-form]').forEach((form) => {
-    form.addEventListener('submit', (e: Event) => {
+    form.addEventListener('submit', async (e: Event) => {
       e.preventDefault();
       const status = form.querySelector<HTMLElement>('.status');
       if (!form.checkValidity()) {
         form.reportValidity();
         return;
       }
+      if (status) { status.hidden = false; status.textContent = 'Sending…'; }
       const endpoint = form.getAttribute('data-endpoint');
-      if (status) status.hidden = false;
-      if (!endpoint) {
-        if (status)
-          status.textContent =
-            'Online requests are not connected yet. Please call dispatch at (310) 856-1980.';
-        return;
+      let success = false;
+      if (endpoint) {
+        try {
+          const r = await fetch(endpoint, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { Accept: 'application/json' },
+          });
+          success = r.ok;
+        } catch { success = false; }
+      } else {
+        success = await submitToSupabase(form);
       }
-      if (status) status.textContent = 'Sending…';
-      fetch(endpoint, {
-        method: 'POST',
-        body: new FormData(form),
-        headers: { Accept: 'application/json' },
-      })
-        .then((r) => {
-          if (!r.ok) throw new Error('Request failed');
-          if (status)
-            status.textContent =
-              'Request received. Our office will contact you. For a tow right now, call (310) 856-1980.';
-          form.reset();
-        })
-        .catch(() => {
-          if (status)
-            status.textContent =
-              'We could not send your request. Please call (310) 856-1980.';
-        });
+      if (success) {
+        if (status) status.textContent = 'Request received. Our office will contact you. For a tow right now, call (310) 856-1980.';
+        form.reset();
+      } else if (endpoint) {
+        if (status) status.textContent = 'We could not send your request. Please call (310) 856-1980.';
+      } else {
+        if (status) status.textContent = 'We could not send your request online. Please call dispatch at (310) 856-1980.';
+      }
     });
   });
 }

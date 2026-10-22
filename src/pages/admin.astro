@@ -1,0 +1,603 @@
+---
+import '@/styles/admin.css';
+import Seo from '@/components/Seo.astro';
+
+const description = 'Staff admin panel for Seventh Street Garage — manage inquiries, FAQs, and site settings.';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <Seo title="Admin Panel" description={description} path="/admin" noindex />
+  </head>
+  <body>
+    <div id="admin-root" class="admin-root">
+  <h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Admin Panel</h1>
+</div>
+    <script>
+      import { supabase } from '@/lib/supabase';
+      import type { Inquiry, Faq, Setting } from '@/lib/supabase';
+
+      type Tab = 'inquiries' | 'faqs' | 'settings';
+
+      const root = document.getElementById('admin-root')!;
+
+      let authed = false;
+      let loading = true;
+      let activeTab: Tab = 'inquiries';
+      let mode: 'login' | 'signup' = 'login';
+      let authError = '';
+      let authBusy = false;
+
+      let inquiries: Inquiry[] = [];
+      let faqs: Faq[] = [];
+      let settings: Setting[] = [];
+      let dataLoading = false;
+
+      let saveError = '';
+      let saving = false;
+      let deleteConfirmId: string | null = null;
+      let editId: string | null = null;
+      let creatingNew = false;
+
+      // ---------- Auth ----------
+      async function checkSession(): Promise<void> {
+        loading = true;
+        render();
+        const { data: { session } } = await supabase.auth.getSession();
+        authed = !!session;
+        loading = false;
+        if (authed) await loadAll();
+        render();
+      }
+
+      supabase.auth.onAuthStateChange((_event, session) => {
+        authed = !!session;
+        if (authed) loadAll().then(render);
+        else render();
+      });
+
+      async function doAuth(email: string, password: string, isSignup: boolean): Promise<void> {
+        authError = '';
+        authBusy = true;
+        render();
+        const fn = isSignup ? supabase.auth.signUp : supabase.auth.signInWithPassword;
+        const { error } = await fn({ email, password });
+        if (error) authError = error.message;
+        authBusy = false;
+        render();
+      }
+
+      async function doLogout(): Promise<void> {
+        await supabase.auth.signOut();
+        authed = false;
+        inquiries = [];
+        faqs = [];
+        settings = [];
+        render();
+      }
+
+      // ---------- Data loading ----------
+      async function loadAll(): Promise<void> {
+        dataLoading = true;
+        const [inqRes, faqRes, setRes] = await Promise.all([
+          supabase.from('inquiries').select('*').order('created_at', { ascending: false }),
+          supabase.from('faqs').select('*').order('category').order('sort_order'),
+          supabase.from('settings').select('*').order('key'),
+        ]);
+        if (inqRes.data) inquiries = inqRes.data as Inquiry[];
+        if (faqRes.data) faqs = faqRes.data as Faq[];
+        if (setRes.data) settings = setRes.data as Setting[];
+        dataLoading = false;
+      }
+
+      // ---------- Inquiries CRUD ----------
+      async function updateInquiryStatus(id: string, status: string): Promise<void> {
+        saving = true;
+        saveError = '';
+        render();
+        const { error } = await supabase.from('inquiries').update({ status }).eq('id', id);
+        if (error) saveError = error.message;
+        else { await loadAll(); }
+        saving = false;
+        render();
+      }
+
+      async function deleteInquiry(id: string): Promise<void> {
+        saving = true;
+        render();
+        const { error } = await supabase.from('inquiries').delete().eq('id', id);
+        if (error) saveError = error.message;
+        else { await loadAll(); deleteConfirmId = null; }
+        saving = false;
+        render();
+      }
+
+      function exportInquiriesCSV(): void {
+        const rows = inquiries;
+        const headers = ['Date', 'Name', 'Email', 'Phone', 'Service', 'Pickup', 'Vehicle', 'Details', 'Type', 'Status'];
+        const csv = [
+          headers.join(','),
+          ...rows.map((r) =>
+            [r.created_at, r.name, r.email, r.phone ?? '', r.service ?? '', r.pickup_location ?? '', r.vehicle ?? '', (r.details ?? '').replace(/"/g, '""'), r.form_type, r.status]
+              .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+              .join(','),
+          ),
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `inquiries-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      // ---------- FAQs CRUD ----------
+      async function saveFaq(data: Partial<Faq>): Promise<void> {
+        saving = true;
+        saveError = '';
+        render();
+        const { id, question, answer, category, sort_order, published } = data;
+        const payload = { question, answer, category, sort_order, published, updated_at: new Date().toISOString() };
+        if (id) {
+          const { error } = await supabase.from('faqs').update(payload).eq('id', id);
+          if (error) saveError = error.message;
+        } else {
+          const { error } = await supabase.from('faqs').insert([payload]);
+          if (error) saveError = error.message;
+        }
+        saving = false;
+        if (!saveError) { editId = null; creatingNew = false; await loadAll(); }
+        render();
+      }
+
+      async function deleteFaq(id: string): Promise<void> {
+        saving = true;
+        render();
+        const { error } = await supabase.from('faqs').delete().eq('id', id);
+        if (error) saveError = error.message;
+        else { await loadAll(); deleteConfirmId = null; }
+        saving = false;
+        render();
+      }
+
+      // ---------- Settings CRUD ----------
+      async function saveSetting(key: string, value: string): Promise<void> {
+        saving = true;
+        saveError = '';
+        render();
+        const { error } = await supabase.from('settings').upsert({ key, value, updated_at: new Date().toISOString() });
+        if (error) saveError = error.message;
+        else { await loadAll(); }
+        saving = false;
+        render();
+      }
+
+      async function deleteSetting(key: string): Promise<void> {
+        saving = true;
+        render();
+        const { error } = await supabase.from('settings').delete().eq('key', key);
+        if (error) saveError = error.message;
+        else { await loadAll(); deleteConfirmId = null; }
+        saving = false;
+        render();
+      }
+
+      // ---------- Rendering ----------
+      function esc(s: string): string {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      function fmtDate(iso: string): string {
+        const d = new Date(iso);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+      }
+
+      function statusPill(status: string): string {
+        return `<span class="admin-pill admin-pill-${status}">${esc(status)}</span>`;
+      }
+
+      function render(): void {
+        if (loading) {
+          root.innerHTML = '<div class="admin-login"><div class="admin-login-card"><h1>Seventh Street Garage</h1><p class="sub">Admin Panel</p><p style="color:rgba(255,255,255,.5);font-size:.9rem">Loading…</p></div></div>';
+          return;
+        }
+        if (!authed) {
+          renderLogin();
+          return;
+        }
+        renderApp();
+      }
+
+      function renderLogin(): void {
+        root.innerHTML = `
+          <div class="admin-login">
+            <div class="admin-login-card">
+              <h1>Seventh Street Garage</h1>
+              <p class="sub">Admin Panel — (310) 856-1980</p>
+              <div class="admin-login-tabs">
+                <button class="${mode === 'login' ? 'active' : ''}" data-mode="login">Sign In</button>
+                <button class="${mode === 'signup' ? 'active' : ''}" data-mode="signup">Sign Up</button>
+              </div>
+              <div class="admin-login-error ${authError ? 'show' : ''}" id="auth-err">${esc(authError)}</div>
+              <form id="auth-form">
+                <div class="admin-field">
+                  <label for="auth-email">Email</label>
+                  <input id="auth-email" type="email" required placeholder="you@example.com" autocomplete="email" />
+                </div>
+                <div class="admin-field">
+                  <label for="auth-pass">Password</label>
+                  <input id="auth-pass" type="password" required placeholder="Minimum 8 characters" autocomplete="${mode === 'login' ? 'current-password' : 'new-password'}" />
+                </div>
+                <button type="submit" class="admin-btn admin-btn-amber admin-btn-full" ${authBusy ? 'disabled' : ''}>
+                  ${authBusy ? '<span class="admin-spin-inline"></span> Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                </button>
+              </form>
+              <a href="/" class="admin-login-back">&larr; Back to website</a>
+            </div>
+          </div>
+        `;
+        root.querySelectorAll('[data-mode]').forEach((btn) =>
+          btn.addEventListener('click', () => { mode = (btn as HTMLElement).dataset.mode as 'login' | 'signup'; authError = ''; render(); }),
+        );
+        root.querySelector('#auth-form')!.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const email = (root.querySelector('#auth-email') as HTMLInputElement).value.trim();
+          const pass = (root.querySelector('#auth-pass') as HTMLInputElement).value;
+          void doAuth(email, pass, mode === 'signup');
+        });
+      }
+
+      function renderApp(): void {
+        const tabs: { key: Tab; label: string; count: number | null }[] = [
+          { key: 'inquiries', label: 'Inquiries', count: inquiries.length },
+          { key: 'faqs', label: 'FAQs', count: faqs.length },
+          { key: 'settings', label: 'Settings', count: settings.length },
+        ];
+        root.innerHTML = `
+          <div class="admin-shell">
+            <header class="admin-header">
+              <div class="admin-header-inner">
+                <h1>SSG Admin</h1>
+                <span class="spacer"></span>
+                <span class="user-info admin-hide-mobile">Logged in as <b id="admin-user"></b></span>
+                <button class="admin-refresh ${dataLoading ? 'spinning' : ''}" id="btn-refresh" title="Refresh data">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                  Refresh
+                </button>
+                <button class="admin-logout" id="btn-logout">Logout</button>
+              </div>
+            </header>
+            <nav class="admin-tabs">
+              <div class="admin-tabs-inner">
+                ${tabs.map((t) => `
+                  <button class="admin-tab ${activeTab === t.key ? 'active' : ''}" data-tab="${t.key}">
+                    ${t.label}
+                    ${t.count !== null ? `<span class="badge">${t.count}</span>` : ''}
+                  </button>
+                `).join('')}
+              </div>
+            </nav>
+            <main class="admin-content">
+              ${saveError ? `<div class="admin-error-banner">${esc(saveError)}<button id="dismiss-err">&times;</button></div>` : ''}
+              ${dataLoading ? '<p style="color:var(--a-muted);font-size:.9rem">Loading data…</p>' : ''}
+              ${activeTab === 'inquiries' ? renderInquiries() : ''}
+              ${activeTab === 'faqs' ? renderFaqs() : ''}
+              ${activeTab === 'settings' ? renderSettings() : ''}
+            </main>
+          </div>
+        `;
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          const el = document.getElementById('admin-user');
+          if (el && user?.email) el.textContent = user.email;
+        });
+        root.querySelector('#btn-refresh')!.addEventListener('click', async () => { await loadAll(); render(); });
+        root.querySelector('#btn-logout')!.addEventListener('click', () => void doLogout());
+        const errBtn = root.querySelector('#dismiss-err');
+        if (errBtn) errBtn.addEventListener('click', () => { saveError = ''; render(); });
+        root.querySelectorAll('[data-tab]').forEach((btn) =>
+          btn.addEventListener('click', () => { activeTab = (btn as HTMLElement).dataset.tab as Tab; editId = null; creatingNew = false; deleteConfirmId = null; render(); }),
+        );
+        if (activeTab === 'inquiries') wireInquiries();
+        if (activeTab === 'faqs') wireFaqs();
+        if (activeTab === 'settings') wireSettings();
+      }
+
+      // ---------- Inquiries view ----------
+      function renderInquiries(): string {
+        if (inquiries.length === 0 && !dataLoading) {
+          return `<div class="admin-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><p>No inquiries yet.</p><span class="cta">Contact form submissions will appear here.</span></div>`;
+        }
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem">
+            <h2 class="admin-section-title">Inquiries</h2>
+            <button class="admin-btn admin-btn-ghost admin-btn-sm" id="btn-csv">Export CSV</button>
+          </div>
+          <div class="admin-card">
+            <table class="admin-table">
+              <thead><tr>
+                <th>Date</th><th>Name</th><th class="admin-hide-mobile">Email</th><th class="admin-hide-mobile">Service</th><th>Type</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody>
+                ${inquiries.map((inq) => `
+                  <tr>
+                    <td style="white-space:nowrap">${esc(fmtDate(inq.created_at))}</td>
+                    <td><b>${esc(inq.name)}</b>${inq.phone ? `<br><span style="font-size:.82rem;color:var(--a-muted)">${esc(inq.phone)}</span>` : ''}</td>
+                    <td class="admin-hide-mobile" style="font-size:.85rem">${esc(inq.email)}</td>
+                    <td class="admin-hide-mobile" style="font-size:.85rem">${esc(inq.service ?? '—')}</td>
+                    <td style="font-size:.82rem">${esc(inq.form_type)}</td>
+                    <td>${statusPill(inq.status)}</td>
+                    <td>
+                      <button class="admin-btn admin-btn-ghost admin-btn-sm" data-expand="${inq.id}">View</button>
+                    </td>
+                  </tr>
+                  ${editId === inq.id ? `
+                    <tr class="admin-row-expand"><td colspan="7">
+                      <div style="display:grid;gap:.5rem;max-width:600px">
+                        ${inq.phone ? `<p><b>Phone:</b> ${esc(inq.phone)}</p>` : ''}
+                        ${inq.pickup_location ? `<p><b>Pickup:</b> ${esc(inq.pickup_location)}</p>` : ''}
+                        ${inq.vehicle ? `<p><b>Vehicle:</b> ${esc(inq.vehicle)}</p>` : ''}
+                        ${inq.details ? `<p><b>Details:</b> ${esc(inq.details)}</p>` : ''}
+                        <div style="display:flex;gap:.6rem;align-items:center;margin-top:.75rem;flex-wrap:wrap">
+                          <a href="mailto:${esc(inq.email)}" class="admin-btn admin-btn-navy admin-btn-sm">Reply by email</a>
+                          ${inq.phone ? `<a href="tel:${esc(inq.phone)}" class="admin-btn admin-btn-ghost admin-btn-sm">Call</a>` : ''}
+                          <select id="inq-status-${inq.id}" style="padding:.4em .6em;border:1px solid var(--a-line);border-radius:6px;font-size:.82rem">
+                            <option value="new" ${inq.status === 'new' ? 'selected' : ''}>New</option>
+                            <option value="read" ${inq.status === 'read' ? 'selected' : ''}>Read</option>
+                            <option value="replied" ${inq.status === 'replied' ? 'selected' : ''}>Replied</option>
+                          </select>
+                          <button class="admin-btn admin-btn-navy admin-btn-sm" data-save-status="${inq.id}">Update status</button>
+                          ${deleteConfirmId === inq.id
+                            ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del="${inq.id}">Yes, delete</button><button class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>Cancel</button></span>`
+                            : `<button class="admin-btn admin-btn-danger admin-btn-sm" data-del="${inq.id}">Delete</button>`}
+                          <button class="admin-btn admin-btn-ghost admin-btn-sm" data-collapse>Close</button>
+                        </div>
+                      </div>
+                    </td></tr>
+                  ` : ''}
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      function wireInquiries(): void {
+        const csv = root.querySelector('#btn-csv');
+        if (csv) csv.addEventListener('click', exportInquiriesCSV);
+        root.querySelectorAll('[data-expand]').forEach((btn) =>
+          btn.addEventListener('click', () => { editId = editId === btn.getAttribute('data-expand') ? null : btn.getAttribute('data-expand'); deleteConfirmId = null; render(); }),
+        );
+        root.querySelectorAll('[data-collapse]').forEach((btn) =>
+          btn.addEventListener('click', () => { editId = null; render(); }),
+        );
+        root.querySelectorAll('[data-save-status]').forEach((btn) =>
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-save-status')!;
+            const sel = root.querySelector(`#inq-status-${id}`) as HTMLSelectElement;
+            void updateInquiryStatus(id, sel.value);
+          }),
+        );
+        root.querySelectorAll('[data-del]').forEach((btn) =>
+          btn.addEventListener('click', () => { deleteConfirmId = btn.getAttribute('data-del'); render(); }),
+        );
+        root.querySelectorAll('[data-confirm-del]').forEach((btn) =>
+          btn.addEventListener('click', () => void deleteInquiry(btn.getAttribute('data-confirm-del')!)),
+        );
+        root.querySelectorAll('[data-cancel-del]').forEach((btn) =>
+          btn.addEventListener('click', () => { deleteConfirmId = null; render(); }),
+        );
+      }
+
+      // ---------- FAQs view ----------
+      function renderFaqs(): string {
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem">
+            <h2 class="admin-section-title">FAQs</h2>
+            <button class="admin-btn admin-btn-amber admin-btn-sm" id="btn-new-faq">+ New FAQ</button>
+          </div>
+          ${creatingNew ? renderFaqForm(null) : ''}
+          ${faqs.length === 0 && !dataLoading
+            ? `<div class="admin-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><p>No FAQs yet.</p><span class="cta">Create your first FAQ above.</span></div>`
+            : `<div class="admin-card"><table class="admin-table">
+              <thead><tr><th>Question</th><th>Category</th><th>Order</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                ${faqs.map((f) => `
+                  <tr>
+                    <td><b>${esc(f.question)}</b><br><span style="font-size:.82rem;color:var(--a-muted)">${esc(f.answer.slice(0, 80))}${f.answer.length > 80 ? '…' : ''}</span></td>
+                    <td style="font-size:.85rem">${esc(f.category)}</td>
+                    <td style="font-family:var(--a-mono);font-size:.85rem">${f.sort_order}</td>
+                    <td>${f.published ? '<span class="admin-pill admin-pill-published">Published</span>' : '<span class="admin-pill admin-pill-draft">Draft</span>'}</td>
+                    <td><button class="admin-btn admin-btn-ghost admin-btn-sm" data-edit-faq="${f.id}">Edit</button></td>
+                  </tr>
+                  ${editId === f.id ? `<tr class="admin-row-expand"><td colspan="5">${renderFaqForm(f)}</td></tr>` : ''}
+                `).join('')}
+              </tbody>
+            </table></div>`}
+        `;
+      }
+
+      function renderFaqForm(f: Faq | null): string {
+        const isEdit = !!f;
+        return `
+          <div class="admin-card" style="margin-bottom:1rem">
+            <div class="admin-card-body">
+              <h3 style="margin:0 0 1rem;font-family:var(--a-display);font-weight:800;font-size:.95rem;text-transform:uppercase">${isEdit ? 'Edit FAQ' : 'New FAQ'}</h3>
+              <form id="faq-form">
+                <div class="admin-form-field">
+                  <label>Question</label>
+                  <input type="text" id="faq-q" required value="${f ? esc(f.question) : ''}" placeholder="What is the question?" />
+                </div>
+                <div class="admin-form-field">
+                  <label>Answer</label>
+                  <textarea id="faq-a" required placeholder="The answer to the question…">${f ? esc(f.answer) : ''}</textarea>
+                </div>
+                <div class="admin-form-row">
+                  <div class="admin-form-field">
+                    <label>Category</label>
+                    <select id="faq-cat">
+                      <option value="home" ${f?.category === 'home' ? 'selected' : ''}>Home</option>
+                      <option value="release" ${f?.category === 'release' ? 'selected' : ''}>Vehicle Release</option>
+                      <option value="auction" ${f?.category === 'auction' ? 'selected' : ''}>Auction</option>
+                    </select>
+                  </div>
+                  <div class="admin-form-field">
+                    <label>Sort Order</label>
+                    <input type="number" id="faq-sort" value="${f ? f.sort_order : 0}" min="0" />
+                  </div>
+                </div>
+                <div class="admin-form-field">
+                  <label class="admin-toggle">
+                    <input type="checkbox" id="faq-pub" ${f?.published !== false ? 'checked' : ''} />
+                    <span class="track"></span>
+                    <span>Published</span>
+                  </label>
+                </div>
+                <div class="admin-form-actions">
+                  <button type="submit" class="admin-btn admin-btn-amber admin-btn-sm" ${saving ? 'disabled' : ''}>
+                    ${saving ? '<span class="admin-spin-inline"></span> Saving…' : 'Save FAQ'}
+                  </button>
+                  <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="faq-cancel">Cancel</button>
+                  ${isEdit ? (deleteConfirmId === f!.id
+                    ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del-faq="${f!.id}">Yes, delete</button><button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>Cancel</button></span>`
+                    : `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-del-faq="${f!.id}">Delete</button>`) : ''}
+                </div>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      function wireFaqs(): void {
+        const newBtn = root.querySelector('#btn-new-faq');
+        if (newBtn) newBtn.addEventListener('click', () => { creatingNew = true; editId = null; deleteConfirmId = null; render(); });
+        root.querySelectorAll('[data-edit-faq]').forEach((btn) =>
+          btn.addEventListener('click', () => { editId = editId === btn.getAttribute('data-edit-faq') ? null : btn.getAttribute('data-edit-faq'); creatingNew = false; deleteConfirmId = null; render(); }),
+        );
+        const form = root.querySelector('#faq-form') as HTMLFormElement | null;
+        if (form) {
+          form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const q = (root.querySelector('#faq-q') as HTMLInputElement).value.trim();
+            const a = (root.querySelector('#faq-a') as HTMLTextAreaElement).value.trim();
+            const cat = (root.querySelector('#faq-cat') as HTMLSelectElement).value;
+            const sort = parseInt((root.querySelector('#faq-sort') as HTMLInputElement).value, 10) || 0;
+            const pub = (root.querySelector('#faq-pub') as HTMLInputElement).checked;
+            void saveFaq({ id: editId ?? undefined, question: q, answer: a, category: cat, sort_order: sort, published: pub });
+          });
+          const cancel = form.querySelector('#faq-cancel');
+          if (cancel) cancel.addEventListener('click', () => { editId = null; creatingNew = false; deleteConfirmId = null; render(); });
+          form.querySelectorAll('[data-del-faq]').forEach((btn) =>
+            btn.addEventListener('click', () => { deleteConfirmId = btn.getAttribute('data-del-faq'); render(); }),
+          );
+          form.querySelectorAll('[data-confirm-del-faq]').forEach((btn) =>
+            btn.addEventListener('click', () => void deleteFaq(btn.getAttribute('data-confirm-del-faq')!)),
+          );
+          form.querySelectorAll('[data-cancel-del]').forEach((btn) =>
+            btn.addEventListener('click', () => { deleteConfirmId = null; render(); }),
+          );
+        }
+      }
+
+      // ---------- Settings view ----------
+      function renderSettings(): string {
+        return `
+          <h2 class="admin-section-title">Settings</h2>
+          <div class="admin-card" style="margin-bottom:1.25rem">
+            <div class="admin-card-body">
+              <h3 style="margin:0 0 .5rem;font-family:var(--a-display);font-weight:800;font-size:.95rem;text-transform:uppercase">Add New Setting</h3>
+              <p style="font-size:.85rem;color:var(--a-muted);margin:0 0 1rem">Store API keys, configuration values, or other site settings here. Keys are case-sensitive.</p>
+              <form id="set-new-form">
+                <div class="admin-form-row">
+                  <div class="admin-form-field">
+                    <label>Key</label>
+                    <input type="text" id="set-new-key" required placeholder="e.g. form_endpoint" style="font-family:var(--a-mono)" />
+                  </div>
+                  <div class="admin-form-field">
+                    <label>Value</label>
+                    <input type="text" id="set-new-val" required placeholder="e.g. https://formspree.io/..." style="font-family:var(--a-mono)" />
+                  </div>
+                </div>
+                <button type="submit" class="admin-btn admin-btn-amber admin-btn-sm" ${saving ? 'disabled' : ''}>${saving ? '<span class="admin-spin-inline"></span> Saving…' : 'Add Setting'}</button>
+              </form>
+            </div>
+          </div>
+          ${settings.length === 0 && !dataLoading
+            ? `<div class="admin-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><p>No settings configured.</p><span class="cta">Add a setting above to get started.</span></div>`
+            : `<div class="admin-card"><table class="admin-table">
+              <thead><tr><th>Key</th><th>Value</th><th>Updated</th><th></th></tr></thead>
+              <tbody>
+                ${settings.map((s) => `
+                  <tr>
+                    <td style="font-family:var(--a-mono);font-weight:600;font-size:.85rem">${esc(s.key)}</td>
+                    <td style="font-family:var(--a-mono);font-size:.85rem;color:var(--a-muted)">${esc(s.value.slice(0, 50))}${s.value.length > 50 ? '…' : ''}</td>
+                    <td style="font-size:.82rem;color:var(--a-muted)">${esc(fmtDate(s.updated_at))}</td>
+                    <td><button class="admin-btn admin-btn-ghost admin-btn-sm" data-edit-set="${s.key}">Edit</button></td>
+                  </tr>
+                  ${editId === `set-${s.key}` ? `<tr class="admin-row-expand"><td colspan="4">
+                    <form id="set-edit-form" data-set-key="${s.key}">
+                      <div class="admin-form-field">
+                        <label>Value for <code style="font-family:var(--a-mono)">${esc(s.key)}</code></label>
+                        <input type="text" id="set-edit-val" required value="${esc(s.value)}" style="font-family:var(--a-mono)" />
+                      </div>
+                      <div class="admin-form-actions">
+                        <button type="submit" class="admin-btn admin-btn-amber admin-btn-sm" ${saving ? 'disabled' : ''}>${saving ? '<span class="admin-spin-inline"></span> Saving…' : 'Save'}</button>
+                        <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-set-cancel>Cancel</button>
+                        ${deleteConfirmId === `set-${s.key}`
+                          ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del-set="${s.key}">Yes</button><button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>No</button></span>`
+                          : `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-del-set="${s.key}">Delete</button>`}
+                      </div>
+                    </form>
+                  </td></tr>` : ''}
+                `).join('')}
+              </tbody>
+            </table></div>`}
+        `;
+      }
+
+      function wireSettings(): void {
+        const newForm = root.querySelector('#set-new-form') as HTMLFormElement | null;
+        if (newForm) {
+          newForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const key = (root.querySelector('#set-new-key') as HTMLInputElement).value.trim();
+            const val = (root.querySelector('#set-new-val') as HTMLInputElement).value;
+            void saveSetting(key, val);
+          });
+        }
+        root.querySelectorAll('[data-edit-set]').forEach((btn) =>
+          btn.addEventListener('click', () => { editId = editId === `set-${btn.getAttribute('data-edit-set')}` ? null : `set-${btn.getAttribute('data-edit-set')}`; deleteConfirmId = null; render(); }),
+        );
+        const editForm = root.querySelector('#set-edit-form') as HTMLFormElement | null;
+        if (editForm) {
+          editForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const key = editForm.getAttribute('data-set-key')!;
+            const val = (root.querySelector('#set-edit-val') as HTMLInputElement).value;
+            void saveSetting(key, val);
+          });
+          editForm.querySelectorAll('[data-set-cancel]').forEach((btn) =>
+            btn.addEventListener('click', () => { editId = null; deleteConfirmId = null; render(); }),
+          );
+          editForm.querySelectorAll('[data-del-set]').forEach((btn) =>
+            btn.addEventListener('click', () => { deleteConfirmId = `set-${btn.getAttribute('data-del-set')}`; render(); }),
+          );
+          editForm.querySelectorAll('[data-confirm-del-set]').forEach((btn) =>
+            btn.addEventListener('click', () => void deleteSetting(btn.getAttribute('data-confirm-del-set')!)),
+          );
+          editForm.querySelectorAll('[data-cancel-del]').forEach((btn) =>
+            btn.addEventListener('click', () => { deleteConfirmId = null; render(); }),
+          );
+        }
+      }
+
+      // ---------- Init ----------
+      void checkSession();
+    </script>
+  </body>
+</html>

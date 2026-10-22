@@ -504,10 +504,58 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
         }
       }
 
+      function getSetting(key: string): string {
+        return settings.find((s) => s.key === key)?.value ?? '';
+      }
+
       // ---------- Settings view ----------
       function renderSettings(): string {
+        const notifyEmail = getSetting('notification_email');
+        const resendKey = getSetting('resend_api_key');
+        const notifConfigured = !!notifyEmail && !!resendKey;
         return `
           <h2 class="admin-section-title">Settings</h2>
+
+          <div class="admin-card" style="margin-bottom:1.25rem">
+            <div class="admin-card-head">
+              <h2>Email Notifications</h2>
+              ${notifConfigured
+                ? '<span class="admin-pill admin-pill-published">Active</span>'
+                : '<span class="admin-pill admin-pill-draft">Not configured</span>'}
+            </div>
+            <div class="admin-card-body">
+              <p style="font-size:.88rem;color:var(--a-muted);margin:0 0 1.25rem">
+                Get an email alert automatically when someone submits a contact form or private property towing request.
+                You need a free <a href="https://resend.com" target="_blank" rel="noopener" style="color:var(--a-navy);font-weight:600">Resend</a> account to send emails.
+              </p>
+              ${!notifConfigured ? `
+                <div style="background:rgba(255,184,28,.08);border:1px solid rgba(255,184,28,.3);border-radius:8px;padding:.85rem 1rem;margin-bottom:1.25rem;font-size:.85rem;color:var(--a-text)">
+                  <b style="display:block;margin-bottom:.4rem">Setup steps:</b>
+                  1. Create a free account at <a href="https://resend.com" target="_blank" rel="noopener" style="color:var(--a-navy);font-weight:600">resend.com</a><br>
+                  2. Get your API key from the Resend dashboard<br>
+                  3. Enter your notification email and API key below<br>
+                  4. Save — you'll start receiving alerts immediately
+                </div>
+              ` : ''}
+              <form id="notif-form">
+                <div class="admin-form-field">
+                  <label>Notification Email — where alerts are sent</label>
+                  <input type="email" id="notif-email" required value="${esc(notifyEmail)}" placeholder="dispatch@seventhstreetgarage.com" />
+                </div>
+                <div class="admin-form-field">
+                  <label>Resend API Key</label>
+                  <input type="password" id="notif-key" required value="${esc(resendKey)}" placeholder="re_xxxxxxxxxxxx" style="font-family:var(--a-mono)" />
+                </div>
+                <div class="admin-form-actions">
+                  <button type="submit" class="admin-btn admin-btn-amber admin-btn-sm" ${saving ? 'disabled' : ''}>
+                    ${saving ? '<span class="admin-spin-inline"></span> Saving…' : 'Save Notification Settings'}
+                  </button>
+                  ${notifConfigured ? '<span style="font-size:.82rem;color:var(--a-green);font-weight:600">&#10003; Emails are being sent</span>' : ''}
+                </div>
+              </form>
+            </div>
+          </div>
+
           <div class="admin-card" style="margin-bottom:1.25rem">
             <div class="admin-card-body">
               <h3 style="margin:0 0 .5rem;font-family:var(--a-display);font-weight:800;font-size:.95rem;text-transform:uppercase">Add New Setting</h3>
@@ -561,6 +609,25 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
       }
 
       function wireSettings(): void {
+        const notifForm = root.querySelector('#notif-form') as HTMLFormElement | null;
+        if (notifForm) {
+          notifForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = (root.querySelector('#notif-email') as HTMLInputElement).value.trim();
+            const key = (root.querySelector('#notif-key') as HTMLInputElement).value.trim();
+            if (!email || !key) return;
+            saving = true;
+            saveError = '';
+            render();
+            const { error: e1 } = await supabase.from('settings').upsert({ key: 'notification_email', value: email, updated_at: new Date().toISOString() });
+            const { error: e2 } = await supabase.from('settings').upsert({ key: 'resend_api_key', value: key, updated_at: new Date().toISOString() });
+            if (e1) saveError = e1.message;
+            else if (e2) saveError = e2.message;
+            saving = false;
+            if (!saveError) await loadAll();
+            render();
+          });
+        }
         const newForm = root.querySelector('#set-new-form') as HTMLFormElement | null;
         if (newForm) {
           newForm.addEventListener('submit', (e) => {

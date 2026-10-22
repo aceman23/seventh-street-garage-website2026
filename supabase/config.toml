@@ -1,0 +1,2 @@
+[functions.notify-inquiry]
+verify_jwt = false

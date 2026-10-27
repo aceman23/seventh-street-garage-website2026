@@ -94,6 +94,14 @@
   color:rgba(255,255,255,.4);font-size:.82rem;text-decoration:none;transition:.15s;
 }
 .admin-login-back:hover{color:var(--a-amber)}
+.admin-forgot-link{
+  display:block;width:100%;text-align:center;margin-top:.85rem;
+  background:none;border:0;cursor:pointer;
+  color:rgba(255,255,255,.45);font-size:.82rem;text-decoration:underline;
+  transition:.15s;
+}
+.admin-forgot-link:hover{color:var(--a-amber)}
+.admin-forgot-link:disabled{opacity:.6;cursor:default}
 
 /* App shell */
 .admin-shell{min-height:100vh;display:flex;flex-direction:column}

@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://www.7thstreetgarage.com',
+  site: 'https://www.opg5.com',
   trailingSlash: 'always',
   output: 'static',
   build: { format: 'directory' },

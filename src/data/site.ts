@@ -1,7 +1,7 @@
 import type { Video } from './types';
 
 export const SITE = {
-  url: 'https://www.7thstreetgarage.com',
+  url: 'https://www.opg5.com',
   name: 'Seventh Street Garage',
   legalName: 'Seventh Street Garage, Inc.',
   phone: '(310) 856-1980',

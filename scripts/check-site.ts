@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { resolve, join, extname } from 'node:path';
 
 const DIST = resolve(process.cwd(), 'dist');
-const SITE_URL = 'https://www.7thstreetgarage.com';
+const SITE_URL = 'https://www.opg5.com';
 
 interface PageResult {
   file: string;

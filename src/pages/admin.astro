@@ -29,6 +29,8 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
       let activeTab: Tab = 'inquiries';
       let authError = '';
       let authBusy = false;
+      let resetSent = false;
+      let resetBusy = false;
 
       let inquiries: Inquiry[] = [];
       let faqs: Faq[] = [];
@@ -52,10 +54,13 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
         render();
       }
 
-      supabase.auth.onAuthStateChange((_event, session) => {
+      supabase.auth.onAuthStateChange((event, session) => {
         authed = !!session;
         if (authed) loadAll().then(render);
         else render();
+        if (event === 'PASSWORD_RECOVERY') {
+          renderResetPasswordForm();
+        }
       });
 
       async function doAuth(email: string, password: string): Promise<void> {
@@ -65,6 +70,22 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) authError = error.message;
         authBusy = false;
+        render();
+      }
+
+      async function sendResetEmail(email: string): Promise<void> {
+        authError = '';
+        resetBusy = true;
+        render();
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/admin/`,
+        });
+        resetBusy = false;
+        if (error) {
+          authError = error.message;
+        } else {
+          resetSent = true;
+        }
         render();
       }
 
@@ -213,6 +234,21 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
       }
 
       function renderLogin(): void {
+        if (resetSent) {
+          root.innerHTML = `
+            <div class="admin-login">
+              <div class="admin-login-card">
+                <h1>Seventh Street Garage</h1>
+                <p class="sub">Admin Panel — (310) 856-1980</p>
+                <div class="admin-login-error show" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4);color:#7ee29a">Password reset email sent. Check your inbox and click the link to choose a new password.</div>
+                <button class="admin-btn admin-btn-ghost admin-btn-full" id="reset-back">&larr; Back to sign in</button>
+                <a href="/" class="admin-login-back">&larr; Back to website</a>
+              </div>
+            </div>
+          `;
+          root.querySelector('#reset-back')!.addEventListener('click', () => { resetSent = false; authError = ''; render(); });
+          return;
+        }
         root.innerHTML = `
           <div class="admin-login">
             <div class="admin-login-card">
@@ -232,6 +268,9 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
                   ${authBusy ? '<span class="admin-spin-inline"></span> Please wait…' : 'Sign In'}
                 </button>
               </form>
+              <button class="admin-forgot-link" id="forgot-btn" ${resetBusy ? 'disabled' : ''}>
+                ${resetBusy ? 'Sending…' : 'Forgot password?'}
+              </button>
               <a href="/" class="admin-login-back">&larr; Back to website</a>
             </div>
           </div>
@@ -241,6 +280,15 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
           const email = (root.querySelector('#auth-email') as HTMLInputElement).value.trim();
           const pass = (root.querySelector('#auth-pass') as HTMLInputElement).value;
           void doAuth(email, pass);
+        });
+        root.querySelector('#forgot-btn')!.addEventListener('click', () => {
+          const email = (root.querySelector('#auth-email') as HTMLInputElement).value.trim();
+          if (!email) {
+            authError = 'Enter your email above first, then click "Forgot password?".';
+            render();
+            return;
+          }
+          void sendResetEmail(email);
         });
       }
 
@@ -531,7 +579,7 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
               <form id="notif-form">
                 <div class="admin-form-field">
                   <label>Notification Email — where alerts are sent</label>
-                  <input type="email" id="notif-email" required value="${esc(notifyEmail)}" placeholder="dispatch@7thstreetgarage.com" />
+                  <input type="email" id="notif-email" required value="${esc(notifyEmail)}" placeholder="dispatch@opg5.com" />
                 </div>
                 <div class="admin-form-field">
                   <label>Resend API Key</label>
@@ -652,6 +700,53 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
             btn.addEventListener('click', () => { deleteConfirmId = null; render(); }),
           );
         }
+      }
+
+      // ---------- Password recovery ----------
+      function renderResetPasswordForm(): void {
+        root.innerHTML = `
+          <div class="admin-login">
+            <div class="admin-login-card">
+              <h1>Seventh Street Garage</h1>
+              <p class="sub">Choose a new password</p>
+              <div class="admin-login-error ${authError ? 'show' : ''}" id="auth-err">${esc(authError)}</div>
+              <form id="reset-form">
+                <div class="admin-field">
+                  <label for="reset-pass">New password</label>
+                  <input id="reset-pass" type="password" required placeholder="Minimum 8 characters" autocomplete="new-password" />
+                </div>
+                <div class="admin-field">
+                  <label for="reset-confirm">Confirm password</label>
+                  <input id="reset-confirm" type="password" required placeholder="Re-enter new password" autocomplete="new-password" />
+                </div>
+                <button type="submit" class="admin-btn admin-btn-amber admin-btn-full" ${authBusy ? 'disabled' : ''}>
+                  ${authBusy ? '<span class="admin-spin-inline"></span> Please wait…' : 'Update password'}
+                </button>
+              </form>
+              <a href="/" class="admin-login-back">&larr; Back to website</a>
+            </div>
+          </div>
+        `;
+        root.querySelector('#reset-form')!.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          authError = '';
+          const pass = (root.querySelector('#reset-pass') as HTMLInputElement).value;
+          const confirm = (root.querySelector('#reset-confirm') as HTMLInputElement).value;
+          if (pass.length < 8) { authError = 'Password must be at least 8 characters.'; render(); return; }
+          if (pass !== confirm) { authError = 'Passwords do not match.'; render(); return; }
+          authBusy = true;
+          render();
+          const { error } = await supabase.auth.updateUser({ password: pass });
+          authBusy = false;
+          if (error) {
+            authError = error.message;
+            render();
+          } else {
+            authError = '';
+            await loadAll();
+            render();
+          }
+        });
       }
 
       // ---------- Init ----------

@@ -30,7 +30,7 @@ All the content (14 services, 50 cities, FAQs), the design system CSS and the im
 
 ```text
 Create an Astro 5 project with TypeScript in strict mode. Static output only (no SSR adapter). Install @astrojs/sitemap and @astrojs/check. Set the following in astro.config.mjs:
-site: 'https://www.seventhstreetgarage.com', trailingSlash: 'always', output: 'static', build.format: 'directory', and the sitemap integration filtered to exclude /404.
+site: 'https://www.7thstreetgarage.com', trailingSlash: 'always', output: 'static', build.format: 'directory', and the sitemap integration filtered to exclude /404.
 Add a tsconfig path alias "@/*" -> "src/*". Do not add Tailwind, React or any UI framework. Create an empty src/data folder and src/styles folder; I will paste data files and CSS next. Stop after scaffolding.
 ```
 

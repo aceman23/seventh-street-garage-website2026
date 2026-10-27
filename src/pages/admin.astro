@@ -27,7 +27,6 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
       let authed = false;
       let loading = true;
       let activeTab: Tab = 'inquiries';
-      let mode: 'login' | 'signup' = 'login';
       let authError = '';
       let authBusy = false;
 
@@ -59,12 +58,11 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
         else render();
       });
 
-      async function doAuth(email: string, password: string, isSignup: boolean): Promise<void> {
+      async function doAuth(email: string, password: string): Promise<void> {
         authError = '';
         authBusy = true;
         render();
-        const fn = isSignup ? supabase.auth.signUp : supabase.auth.signInWithPassword;
-        const { error } = await fn({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) authError = error.message;
         authBusy = false;
         render();
@@ -220,10 +218,6 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
             <div class="admin-login-card">
               <h1>Seventh Street Garage</h1>
               <p class="sub">Admin Panel — (310) 856-1980</p>
-              <div class="admin-login-tabs">
-                <button class="${mode === 'login' ? 'active' : ''}" data-mode="login">Sign In</button>
-                <button class="${mode === 'signup' ? 'active' : ''}" data-mode="signup">Sign Up</button>
-              </div>
               <div class="admin-login-error ${authError ? 'show' : ''}" id="auth-err">${esc(authError)}</div>
               <form id="auth-form">
                 <div class="admin-field">
@@ -232,24 +226,21 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
                 </div>
                 <div class="admin-field">
                   <label for="auth-pass">Password</label>
-                  <input id="auth-pass" type="password" required placeholder="Minimum 8 characters" autocomplete="${mode === 'login' ? 'current-password' : 'new-password'}" />
+                  <input id="auth-pass" type="password" required placeholder="Enter your password" autocomplete="current-password" />
                 </div>
                 <button type="submit" class="admin-btn admin-btn-amber admin-btn-full" ${authBusy ? 'disabled' : ''}>
-                  ${authBusy ? '<span class="admin-spin-inline"></span> Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                  ${authBusy ? '<span class="admin-spin-inline"></span> Please wait…' : 'Sign In'}
                 </button>
               </form>
               <a href="/" class="admin-login-back">&larr; Back to website</a>
             </div>
           </div>
         `;
-        root.querySelectorAll('[data-mode]').forEach((btn) =>
-          btn.addEventListener('click', () => { mode = (btn as HTMLElement).dataset.mode as 'login' | 'signup'; authError = ''; render(); }),
-        );
         root.querySelector('#auth-form')!.addEventListener('submit', (e) => {
           e.preventDefault();
           const email = (root.querySelector('#auth-email') as HTMLInputElement).value.trim();
           const pass = (root.querySelector('#auth-pass') as HTMLInputElement).value;
-          void doAuth(email, pass, mode === 'signup');
+          void doAuth(email, pass);
         });
       }
 

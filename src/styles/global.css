@@ -449,9 +449,44 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .social svg{width:18px;height:18px}
 
 /* mobile dispatch bar */
-.dispatch-bar{position:fixed;left:0;right:0;bottom:0;z-index:55;display:none;grid-template-columns:1.3fr 1fr;gap:.5rem;padding:.6rem var(--gutter-r) calc(.6rem + env(safe-area-inset-bottom,0px)) var(--gutter);background:rgba(10,16,32,.96);border-top:1px solid var(--line-dark)}
-.dispatch-bar .btn{padding:.9em .6em;font-size:.92rem}
+.dispatch-bar{display:none}
 @media (max-width:760px){.dispatch-bar{display:grid}}
+
+/* floating call button */
+.float-call{position:fixed;right:1rem;bottom:1rem;z-index:56}
+.float-call-fab{
+  display:flex;align-items:center;justify-content:center;
+  width:58px;height:58px;border-radius:50%;border:0;cursor:pointer;
+  background:var(--amber);color:var(--ink);
+  box-shadow:0 4px 16px rgba(0,0,0,.28);transition:transform .2s,box-shadow .2s;
+}
+.float-call-fab:hover{transform:scale(1.06);box-shadow:0 6px 22px rgba(0,0,0,.35)}
+.float-call-fab svg{width:24px;height:24px}
+.float-call-panel{
+  position:absolute;right:0;bottom:70px;width:max-content;max-width:calc(100vw - 2rem);
+  background:var(--ink);color:var(--white);border-radius:14px;
+  box-shadow:0 8px 30px rgba(0,0,0,.4);overflow:hidden;
+  opacity:0;transform:translateY(10px) scale(.96);pointer-events:none;
+  transition:opacity .18s,transform .18s;
+}
+.float-call-panel.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.float-call-number{display:block;padding:1rem 1.35rem .75rem;text-decoration:none;color:var(--white)}
+.float-call-label{display:block;font-size:.72rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--mist);margin-bottom:.35rem}
+.float-call-num{display:block;font-family:var(--display);font-weight:800;font-size:1.35rem;font-stretch:120%;font-style:italic;letter-spacing:-.01em;color:var(--amber)}
+.float-call-request{
+  display:block;padding:.6rem 1.35rem;font-size:.82rem;font-weight:600;
+  background:rgba(255,255,255,.05);border-top:1px solid rgba(255,255,255,.08);
+  color:var(--white);text-decoration:none;transition:.15s;
+}
+.float-call-request:hover{background:rgba(255,184,28,.1);color:var(--amber)}
+.float-call-fab.open{transform:rotate(135deg) scale(1.06)}
+@media (max-width:760px){
+  .float-call-num{font-size:1.5rem}
+}
+@media (min-width:761px){
+  .float-call{bottom:1.5rem;right:1.5rem}
+  .float-call-fab{width:52px;height:52px}
+}
 
 /* mobile finish */
 @media (max-width:600px){

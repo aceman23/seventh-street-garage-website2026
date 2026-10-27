@@ -1,0 +1,16 @@
+---
+import { SITE } from '@/data/site';
+import Icon from './Icon.astro';
+---
+<div class="float-call" id="float-call">
+  <button class="float-call-fab" id="float-call-toggle" aria-label="Call dispatch" aria-expanded="false">
+    <Icon name="phone" />
+  </button>
+  <div class="float-call-panel" id="float-call-panel" hidden>
+    <a href={`tel:${SITE.tel}`} class="float-call-number">
+      <span class="float-call-label">Call dispatch 24/7</span>
+      <span class="float-call-num">{SITE.phone}</span>
+    </a>
+    <a href="/contact/#request" class="float-call-request">Request a tow &rarr;</a>
+  </div>
+</div>

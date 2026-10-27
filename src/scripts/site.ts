@@ -416,6 +416,36 @@ function initYear(): void {
   if (y) y.textContent = String(new Date().getFullYear());
 }
 
+/* ---------- floating call button ---------- */
+function initFloatingCall(): void {
+  const toggle = document.getElementById('float-call-toggle');
+  const panel = document.getElementById('float-call-panel');
+  if (!toggle || !panel) return;
+
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = panel.classList.toggle('show');
+    toggle.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!panel.contains(e.target as Node) && !toggle.contains(e.target as Node)) {
+      panel.classList.remove('show');
+      toggle.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      panel.classList.remove('show');
+      toggle.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
 /* ---------- run ---------- */
 function init(): void {
   initNav();
@@ -425,6 +455,7 @@ function init(): void {
   initForms();
   initScrollReveal();
   initYear();
+  initFloatingCall();
 }
 
 if (document.readyState === 'loading') {

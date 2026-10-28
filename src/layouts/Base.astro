@@ -23,6 +23,13 @@ const { title, description, path, graph, active, noindex } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <Seo title={title} description={description} path={path} graph={graph} noindex={noindex} />
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-JB0MCG1BHG"></script>
+    <script is:inline define:vars={{ GA_ID: 'G-JB0MCG1BHG' }}>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', GA_ID);
+    </script>
     <slot name="head" />
   </head>
   <body>

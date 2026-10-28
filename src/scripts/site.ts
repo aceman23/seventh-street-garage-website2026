@@ -447,15 +447,25 @@ function initFloatingCall(): void {
 }
 
 /* ---------- run ---------- */
+function runWhenIdle(task: () => void): void {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(task);
+  } else {
+    setTimeout(task, 1);
+  }
+}
+
 function init(): void {
   initNav();
   document.querySelectorAll<HTMLElement>('[data-carousel]').forEach(initCarousel);
-  initReviews();
-  initVideos();
   initForms();
-  initScrollReveal();
   initYear();
   initFloatingCall();
+  runWhenIdle(() => {
+    initReviews();
+    initVideos();
+    initScrollReveal();
+  });
 }
 
 if (document.readyState === 'loading') {

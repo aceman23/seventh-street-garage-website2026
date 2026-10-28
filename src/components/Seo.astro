@@ -28,8 +28,13 @@ let fullTitle = title;
 if (!title.includes(BRAND) && `${title} | ${BRAND}`.length <= 66) {
   fullTitle = `${title} | ${BRAND}`;
 }
-const canonical = `${SITE.url}${path}`;
-const ogImgAbs = ogImage.startsWith('http') ? ogImage : `${SITE.url}${ogImage}`;
+const siteUrl = new URL(SITE.url);
+const canonicalUrl = new URL(path, siteUrl);
+const canonicalPath = canonicalUrl.pathname === '/'
+  ? '/'
+  : `${canonicalUrl.pathname.replace(/\/+$/, '')}/`;
+const canonical = new URL(canonicalPath, siteUrl).toString();
+const ogImgAbs = ogImage.startsWith('http') ? ogImage : new URL(ogImage, siteUrl).toString();
 
 const robots = noindex
   ? 'noindex, follow'

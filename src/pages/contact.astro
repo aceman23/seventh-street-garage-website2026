@@ -76,6 +76,7 @@ const serviceOptions = SERVICES.map((s) => s.name).concat([
             <input id="c-vehicle" name="vehicle" type="text" placeholder="Year, make, model, color" />
             <label for="c-details">Details</label>
             <textarea id="c-details" name="details" placeholder="Tell us what happened or what you need"></textarea>
+            <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" />
             <input type="hidden" name="form" value="contact" />
             <button type="submit" class="btn btn-amber"><Icon name="phone" /> Send request</button>
             <p class="status" role="status" hidden></p>

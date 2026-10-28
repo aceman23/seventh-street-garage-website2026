@@ -3,23 +3,27 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey, x-webhook-secret",
 };
 
+interface InquiryRecord {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  service: string | null;
+  pickup_location: string | null;
+  dropoff: string | null;
+  vehicle: string | null;
+  details: string | null;
+  company: string | null;
+  form_type: string;
+  status: string;
+  created_at: string;
+}
+
 interface InquiryPayload {
-  record: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string | null;
-    service: string | null;
-    pickup_location: string | null;
-    vehicle: string | null;
-    details: string | null;
-    form_type: string;
-    status: string;
-    created_at: string;
-  };
+  record: InquiryRecord;
 }
 
 Deno.serve(async (req: Request) => {
@@ -28,6 +32,16 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Validate webhook secret header
+    const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
+    const receivedSecret = req.headers.get("x-webhook-secret");
+    if (!webhookSecret || receivedSecret !== webhookSecret) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const body: InquiryPayload = await req.json();
     const inq = body.record;
     if (!inq || !inq.id) {
@@ -41,21 +55,14 @@ Deno.serve(async (req: Request) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Read notification email + Resend API key from settings table
+    // Read notification email from settings table
     const { data: emailSetting } = await supabase
       .from("settings")
       .select("value")
       .eq("key", "notification_email")
       .maybeSingle();
 
-    const { data: resendKeySetting } = await supabase
-      .from("settings")
-      .select("value")
-      .eq("key", "resend_api_key")
-      .maybeSingle();
-
     const notifyEmail = emailSetting?.value || "";
-    const resendKey = resendKeySetting?.value || Deno.env.get("RESEND_API_KEY") || "";
 
     if (!notifyEmail) {
       return new Response(
@@ -64,9 +71,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Read Resend API key from edge function secret (not from settings table)
+    const resendKey = Deno.env.get("RESEND_API_KEY") || "";
+
     if (!resendKey) {
       return new Response(
-        JSON.stringify({ message: "No resend_api_key setting or RESEND_API_KEY env — skipping email" }),
+        JSON.stringify({ message: "No RESEND_API_KEY secret configured — skipping email" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -91,15 +101,17 @@ Deno.serve(async (req: Request) => {
           <p style="color:#556074;font-size:13px;margin:0 0 16px;font-family:monospace">${dateStr} · ${formLabel}</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px;color:#121A2C">
             <tr><td style="padding:6px 0;width:120px;color:#556074;font-weight:600">Name</td><td style="padding:6px 0"><b>${esc(inq.name)}</b></td></tr>
+            ${inq.company ? `<tr><td style="padding:6px 0;color:#556074;font-weight:600">Company</td><td style="padding:6px 0">${esc(inq.company)}</td></tr>` : ""}
             ${inq.phone ? `<tr><td style="padding:6px 0;color:#556074;font-weight:600">Phone</td><td style="padding:6px 0"><a href="tel:${esc(inq.phone)}" style="color:#13213F">${esc(inq.phone)}</a></td></tr>` : ""}
-            <tr><td style="padding:6px 0;color:#556074;font-weight:600">Email</td><td style="padding:6px 0"><a href="mailto:${esc(inq.email)}" style="color:#13213F">${esc(inq.email)}</a></td></tr>
+            ${inq.email ? `<tr><td style="padding:6px 0;color:#556074;font-weight:600">Email</td><td style="padding:6px 0"><a href="mailto:${esc(inq.email)}" style="color:#13213F">${esc(inq.email)}</a></td></tr>` : ""}
             ${inq.service ? `<tr><td style="padding:6px 0;color:#556074;font-weight:600">Service</td><td style="padding:6px 0">${esc(inq.service)}</td></tr>` : ""}
             ${inq.pickup_location ? `<tr><td style="padding:6px 0;color:#556074;font-weight:600">Location</td><td style="padding:6px 0">${esc(inq.pickup_location)}</td></tr>` : ""}
+            ${inq.dropoff ? `<tr><td style="padding:6px 0;color:#556074;font-weight:600">Drop-off</td><td style="padding:6px 0">${esc(inq.dropoff)}</td></tr>` : ""}
             ${inq.vehicle ? `<tr><td style="padding:6px 0;color:#556074;font-weight:600">Vehicle</td><td style="padding:6px 0">${esc(inq.vehicle)}</td></tr>` : ""}
           </table>
           ${inq.details ? `<div style="margin-top:16px;padding:14px;background:#F7F8FA;border-radius:6px;border-left:3px solid #FFB81C"><p style="margin:0;font-size:14px;color:#121A2C;line-height:1.5">${esc(inq.details)}</p></div>` : ""}
           <div style="margin-top:24px;padding-top:16px;border-top:1px solid #D5DAE3">
-            <a href="${supabaseUrl.replace('.supabase.co', '.supabase.co')}/admin" style="display:inline-block;background:#FFB81C;color:#0A1020;font-weight:700;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;text-transform:uppercase">View in Admin Panel</a>
+            <a href="https://www.opg5.com/admin/" style="display:inline-block;background:#FFB81C;color:#0A1020;font-weight:700;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;text-transform:uppercase">View in Admin Panel</a>
           </div>
         </div>
         <p style="text-align:center;color:#A8B2C7;font-size:11px;margin-top:16px">Seventh Street Garage · (310) 856-1980 · 24/7 Dispatch</p>
@@ -113,14 +125,16 @@ Deno.serve(async (req: Request) => {
       `Form: ${formLabel}`,
       ``,
       `Name: ${inq.name}`,
+      inq.company ? `Company: ${inq.company}` : "",
       inq.phone ? `Phone: ${inq.phone}` : "",
-      `Email: ${inq.email}`,
+      inq.email ? `Email: ${inq.email}` : "",
       inq.service ? `Service: ${inq.service}` : "",
       inq.pickup_location ? `Location: ${inq.pickup_location}` : "",
+      inq.dropoff ? `Drop-off: ${inq.dropoff}` : "",
       inq.vehicle ? `Vehicle: ${inq.vehicle}` : "",
       inq.details ? `Details: ${inq.details}` : "",
       ``,
-      `View in admin panel at ${supabaseUrl}/admin`,
+      `View in admin panel at https://www.opg5.com/admin/`,
     ].filter(Boolean).join("\n");
 
     const resendRes = await fetch("https://api.resend.com/emails", {
@@ -130,7 +144,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Seventh Street Garage <onboarding@resend.dev>",
+        from: "Seventh Street Garage <website@opg5.com>",
         to: [notifyEmail],
         subject: `New ${formLabel} inquiry from ${inq.name}`,
         html,
@@ -163,5 +177,6 @@ function esc(s: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }

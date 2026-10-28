@@ -314,6 +314,11 @@ function initVideos(): void {
 /* ---------- forms ---------- */
 async function submitToSupabase(form: HTMLFormElement): Promise<boolean> {
   const fd = new FormData(form);
+
+  // Honeypot: if the hidden field is filled, silently drop the submission
+  const honeypot = (fd.get('website') as string) ?? '';
+  if (honeypot) return true;
+
   const formType = (fd.get('form') as string) || 'contact';
   const payload: Record<string, string | null> = {
     name: (fd.get('name') as string) ?? null,
@@ -321,15 +326,17 @@ async function submitToSupabase(form: HTMLFormElement): Promise<boolean> {
     phone: (fd.get('phone') as string) ?? null,
     service: (fd.get('service') as string) ?? null,
     pickup_location: (fd.get('pickup_location') as string) ?? null,
+    dropoff: (fd.get('dropoff') as string) ?? null,
     vehicle: (fd.get('vehicle') as string) ?? null,
     details: (fd.get('details') as string) ?? null,
+    company: (fd.get('company') as string) ?? null,
     form_type: formType,
   };
   if (formType === 'private-property') {
     payload.service = (fd.get('property_type') as string) ?? null;
     payload.pickup_location = (fd.get('address') as string) ?? null;
   }
-  if (!payload.name || !payload.email) return false;
+  if (!payload.name || !payload.phone) return false;
   try {
     const url = import.meta.env.VITE_SUPABASE_URL;
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -355,6 +362,15 @@ function initForms(): void {
     form.addEventListener('submit', async (e: Event) => {
       e.preventDefault();
       const status = form.querySelector<HTMLElement>('.status');
+
+      // Honeypot: if filled, pretend success without sending
+      const hp = form.querySelector<HTMLInputElement>('input[name="website"]');
+      if (hp && hp.value) {
+        if (status) { status.hidden = false; status.textContent = 'Request received. Our office will contact you. For a tow right now, call (310) 856-1980.'; }
+        form.reset();
+        return;
+      }
+
       if (!form.checkValidity()) {
         form.reportValidity();
         return;

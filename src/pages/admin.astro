@@ -136,11 +136,11 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
 
       function exportInquiriesCSV(): void {
         const rows = inquiries;
-        const headers = ['Date', 'Name', 'Email', 'Phone', 'Service', 'Pickup', 'Vehicle', 'Details', 'Type', 'Status'];
+        const headers = ['Date', 'Name', 'Email', 'Phone', 'Company', 'Service', 'Pickup', 'Drop-off', 'Vehicle', 'Details', 'Type', 'Status'];
         const csv = [
           headers.join(','),
           ...rows.map((r) =>
-            [r.created_at, r.name, r.email, r.phone ?? '', r.service ?? '', r.pickup_location ?? '', r.vehicle ?? '', (r.details ?? '').replace(/"/g, '""'), r.form_type, r.status]
+            [r.created_at, r.name, r.email ?? '', r.phone ?? '', r.company ?? '', r.service ?? '', r.pickup_location ?? '', r.dropoff ?? '', r.vehicle ?? '', (r.details ?? '').replace(/"/g, '""'), r.form_type, r.status]
               .map((v) => `"${String(v).replace(/"/g, '""')}"`)
               .join(','),
           ),
@@ -209,7 +209,9 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
       function esc(s: string): string {
         const d = document.createElement('div');
         d.textContent = s;
-        return d.innerHTML;
+        return d.innerHTML
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
       }
 
       function fmtDate(iso: string): string {
@@ -367,12 +369,12 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
                   <tr>
                     <td style="white-space:nowrap">${esc(fmtDate(inq.created_at))}</td>
                     <td><b>${esc(inq.name)}</b>${inq.phone ? `<br><span style="font-size:.82rem;color:var(--a-muted)">${esc(inq.phone)}</span>` : ''}</td>
-                    <td class="admin-hide-mobile" style="font-size:.85rem">${esc(inq.email)}</td>
+                    <td class="admin-hide-mobile" style="font-size:.85rem">${inq.email ? esc(inq.email) : '—'}</td>
                     <td class="admin-hide-mobile" style="font-size:.85rem">${esc(inq.service ?? '—')}</td>
                     <td style="font-size:.82rem">${esc(inq.form_type)}</td>
                     <td>${statusPill(inq.status)}</td>
                     <td>
-                      <button class="admin-btn admin-btn-ghost admin-btn-sm" data-expand="${inq.id}">View</button>
+                      <button class="admin-btn admin-btn-ghost admin-btn-sm" data-expand="${esc(inq.id)}">View</button>
                     </td>
                   </tr>
                   ${editId === inq.id ? `
@@ -380,20 +382,22 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
                       <div style="display:grid;gap:.5rem;max-width:600px">
                         ${inq.phone ? `<p><b>Phone:</b> ${esc(inq.phone)}</p>` : ''}
                         ${inq.pickup_location ? `<p><b>Pickup:</b> ${esc(inq.pickup_location)}</p>` : ''}
+                        ${inq.dropoff ? `<p><b>Drop-off:</b> ${esc(inq.dropoff)}</p>` : ''}
+                        ${inq.company ? `<p><b>Company:</b> ${esc(inq.company)}</p>` : ''}
                         ${inq.vehicle ? `<p><b>Vehicle:</b> ${esc(inq.vehicle)}</p>` : ''}
                         ${inq.details ? `<p><b>Details:</b> ${esc(inq.details)}</p>` : ''}
                         <div style="display:flex;gap:.6rem;align-items:center;margin-top:.75rem;flex-wrap:wrap">
-                          <a href="mailto:${esc(inq.email)}" class="admin-btn admin-btn-navy admin-btn-sm">Reply by email</a>
+                          ${inq.email ? `<a href="mailto:${esc(inq.email)}" class="admin-btn admin-btn-navy admin-btn-sm">Reply by email</a>` : ''}
                           ${inq.phone ? `<a href="tel:${esc(inq.phone)}" class="admin-btn admin-btn-ghost admin-btn-sm">Call</a>` : ''}
-                          <select id="inq-status-${inq.id}" style="padding:.4em .6em;border:1px solid var(--a-line);border-radius:6px;font-size:.82rem">
+                          <select id="inq-status-${esc(inq.id)}" style="padding:.4em .6em;border:1px solid var(--a-line);border-radius:6px;font-size:.82rem">
                             <option value="new" ${inq.status === 'new' ? 'selected' : ''}>New</option>
                             <option value="read" ${inq.status === 'read' ? 'selected' : ''}>Read</option>
                             <option value="replied" ${inq.status === 'replied' ? 'selected' : ''}>Replied</option>
                           </select>
-                          <button class="admin-btn admin-btn-navy admin-btn-sm" data-save-status="${inq.id}">Update status</button>
+                          <button class="admin-btn admin-btn-navy admin-btn-sm" data-save-status="${esc(inq.id)}">Update status</button>
                           ${deleteConfirmId === inq.id
-                            ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del="${inq.id}">Yes, delete</button><button class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>Cancel</button></span>`
-                            : `<button class="admin-btn admin-btn-danger admin-btn-sm" data-del="${inq.id}">Delete</button>`}
+                            ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del="${esc(inq.id)}">Yes, delete</button><button class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>Cancel</button></span>`
+                            : `<button class="admin-btn admin-btn-danger admin-btn-sm" data-del="${esc(inq.id)}">Delete</button>`}
                           <button class="admin-btn admin-btn-ghost admin-btn-sm" data-collapse>Close</button>
                         </div>
                       </div>
@@ -452,7 +456,7 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
                     <td style="font-size:.85rem">${esc(f.category)}</td>
                     <td style="font-family:var(--a-mono);font-size:.85rem">${f.sort_order}</td>
                     <td>${f.published ? '<span class="admin-pill admin-pill-published">Published</span>' : '<span class="admin-pill admin-pill-draft">Draft</span>'}</td>
-                    <td><button class="admin-btn admin-btn-ghost admin-btn-sm" data-edit-faq="${f.id}">Edit</button></td>
+                    <td><button class="admin-btn admin-btn-ghost admin-btn-sm" data-edit-faq="${esc(f.id)}">Edit</button></td>
                   </tr>
                   ${editId === f.id ? `<tr class="admin-row-expand"><td colspan="5">${renderFaqForm(f)}</td></tr>` : ''}
                 `).join('')}
@@ -487,7 +491,7 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
                   </div>
                   <div class="admin-form-field">
                     <label>Sort Order</label>
-                    <input type="number" id="faq-sort" value="${f ? f.sort_order : 0}" min="0" />
+                    <input type="number" id="faq-sort" value="${f ? esc(String(f.sort_order)) : '0'}" min="0" />
                   </div>
                 </div>
                 <div class="admin-form-field">
@@ -503,8 +507,8 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
                   </button>
                   <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="faq-cancel">Cancel</button>
                   ${isEdit ? (deleteConfirmId === f!.id
-                    ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del-faq="${f!.id}">Yes, delete</button><button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>Cancel</button></span>`
-                    : `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-del-faq="${f!.id}">Delete</button>`) : ''}
+                    ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del-faq="${esc(f!.id)}">Yes, delete</button><button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>Cancel</button></span>`
+                    : `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-del-faq="${esc(f!.id)}">Delete</button>`) : ''}
                 </div>
               </form>
             </div>
@@ -624,10 +628,10 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
                     <td style="font-family:var(--a-mono);font-weight:600;font-size:.85rem">${esc(s.key)}</td>
                     <td style="font-family:var(--a-mono);font-size:.85rem;color:var(--a-muted)">${esc(s.value.slice(0, 50))}${s.value.length > 50 ? '…' : ''}</td>
                     <td style="font-size:.82rem;color:var(--a-muted)">${esc(fmtDate(s.updated_at))}</td>
-                    <td><button class="admin-btn admin-btn-ghost admin-btn-sm" data-edit-set="${s.key}">Edit</button></td>
+                    <td><button class="admin-btn admin-btn-ghost admin-btn-sm" data-edit-set="${esc(s.key)}">Edit</button></td>
                   </tr>
                   ${editId === `set-${s.key}` ? `<tr class="admin-row-expand"><td colspan="4">
-                    <form id="set-edit-form" data-set-key="${s.key}">
+                    <form id="set-edit-form" data-set-key="${esc(s.key)}">
                       <div class="admin-form-field">
                         <label>Value for <code style="font-family:var(--a-mono)">${esc(s.key)}</code></label>
                         <input type="text" id="set-edit-val" required value="${esc(s.value)}" style="font-family:var(--a-mono)" />
@@ -636,8 +640,8 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
                         <button type="submit" class="admin-btn admin-btn-amber admin-btn-sm" ${saving ? 'disabled' : ''}>${saving ? '<span class="admin-spin-inline"></span> Saving…' : 'Save'}</button>
                         <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-set-cancel>Cancel</button>
                         ${deleteConfirmId === `set-${s.key}`
-                          ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del-set="${s.key}">Yes</button><button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>No</button></span>`
-                          : `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-del-set="${s.key}">Delete</button>`}
+                          ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del-set="${esc(s.key)}">Yes</button><button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>No</button></span>`
+                          : `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-del-set="${esc(s.key)}">Delete</button>`}
                       </div>
                     </form>
                   </td></tr>` : ''}

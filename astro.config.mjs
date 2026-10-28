@@ -6,5 +6,5 @@ export default defineConfig({
   trailingSlash: 'always',
   output: 'static',
   build: { format: 'directory' },
-  integrations: [sitemap({ filter: (p) => !p.includes('/404') })],
+  integrations: [sitemap({ filter: (p) => !p.includes('/404') && !p.includes('/admin') })],
 });

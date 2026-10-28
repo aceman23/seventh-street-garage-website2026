@@ -35,6 +35,7 @@ import Icon from './Icon.astro';
     </select>
     <label for="pp-details">Details</label>
     <textarea id="pp-details" name="details" placeholder="Tell us about your property, signage, and towing needs"></textarea>
+    <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" />
     <input type="hidden" name="form" value="private-property" />
     <button type="submit" class="btn btn-amber"><Icon name="phone" /> Send to property towing manager</button>
     <p class="status" role="status" hidden></p>

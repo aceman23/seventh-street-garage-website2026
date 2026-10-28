@@ -17,11 +17,13 @@ export const supabase = createClient(url, anonKey, {
 export type Inquiry = {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   service: string | null;
   pickup_location: string | null;
+  dropoff: string | null;
   vehicle: string | null;
+  company: string | null;
   details: string | null;
   form_type: string;
   status: string;

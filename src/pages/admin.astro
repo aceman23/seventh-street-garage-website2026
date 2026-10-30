@@ -3,6 +3,8 @@ import '@/styles/admin.css';
 import Seo from '@/components/Seo.astro';
 
 const description = 'Staff admin panel for Seventh Street Garage — manage inquiries, FAQs, and site settings.';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 ---
 <!doctype html>
 <html lang="en">
@@ -13,16 +15,26 @@ const description = 'Staff admin panel for Seventh Street Garage — manage inqu
     <Seo title="Admin Panel" description={description} path="/admin" noindex />
   </head>
   <body>
-    <div id="admin-root" class="admin-root">
+    <div id="admin-root" class="admin-root" data-supabase-url={supabaseUrl} data-supabase-key={supabaseAnonKey}>
   <h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Admin Panel</h1>
 </div>
     <script>
-      import { supabase } from '@/lib/supabase';
+      import { createClient } from '@supabase/supabase-js';
       import type { Inquiry, Faq, Setting } from '@/lib/supabase';
 
       type Tab = 'inquiries' | 'faqs' | 'settings';
 
       const root = document.getElementById('admin-root')!;
+
+      const supabaseUrl = root.dataset.supabaseUrl ?? '';
+      const supabaseAnonKey = root.dataset.supabaseKey ?? '';
+      if (!supabaseUrl || !supabaseAnonKey) {
+        root.innerHTML = '<div class="admin-login"><div class="admin-login-card"><h1>Configuration Error</h1><p class="sub">Supabase environment variables are missing.</p></div></div>';
+        throw new Error('Missing Supabase env vars');
+      }
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: true, autoRefreshToken: true },
+      });
 
       let authed = false;
       let loading = true;

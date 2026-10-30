@@ -338,8 +338,9 @@ async function submitToSupabase(form: HTMLFormElement): Promise<boolean> {
   }
   if (!payload.name || !payload.phone) return false;
   try {
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const config = document.getElementById('env-config');
+    const url = config?.dataset.supabaseUrl ?? '';
+    const anonKey = config?.dataset.supabaseKey ?? '';
     if (!url || !anonKey) return false;
     const res = await fetch(`${url}/rest/v1/inquiries`, {
       method: 'POST',

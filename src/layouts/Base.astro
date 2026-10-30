@@ -17,6 +17,8 @@ interface Props {
   noindex?: boolean;
 }
 const { title, description, path, graph, active, noindex } = Astro.props;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 ---
 <!doctype html>
 <html lang="en">
@@ -42,6 +44,7 @@ const { title, description, path, graph, active, noindex } = Astro.props;
     <CtaBand />
     <Footer />
     <FloatingCall />
+    <div id="env-config" data-supabase-url={supabaseUrl} data-supabase-key={supabaseAnonKey} hidden></div>
     <script>
       import '@/scripts/site.ts';
     </script>

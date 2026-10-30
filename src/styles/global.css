@@ -174,6 +174,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .hero-phone .tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mist);border:1px solid var(--line-dark);padding:.35em .6em;border-radius:3px}
 @media (max-width:900px){.hero-grid{grid-template-columns:1fr}}
 
+/* vehicle search banner */
+.vehicle-search-banner{background:var(--navy);border-bottom:1px solid var(--line-dark)}
+.vehicle-search-banner a{display:flex;align-items:center;justify-content:center;gap:.7rem;padding:.8rem 1rem;text-decoration:none;color:var(--white);font-family:var(--display);font-weight:700;font-stretch:108%;font-size:clamp(.9rem,.8rem + .5vw,1.05rem);transition:background .15s}
+.vehicle-search-banner a:hover{background:rgba(255,184,28,.08)}
+.vsb-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--amber);color:var(--ink);flex:none}
+.vsb-icon svg{width:18px;height:18px}
+.vsb-text b{color:var(--amber);font-weight:800}
+
 /* carousel */
 .carousel{position:relative;border-radius:14px;overflow:hidden;background:var(--navy);box-shadow:0 40px 80px -30px rgba(0,0,0,.7),0 0 0 1px var(--line-dark)}
 .car-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;aspect-ratio:1/1}

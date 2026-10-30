@@ -372,6 +372,10 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
                 <h1>SSG Admin</h1>
                 <span class="spacer"></span>
                 <span class="user-info admin-hide-mobile">Logged in as <b id="admin-user"></b></span>
+                <button class="admin-header-analytics ${activeTab === 'analytics' ? 'active' : ''}" id="btn-header-analytics">
+                  <span class="admin-header-analytics-dot"></span>
+                  Analytics
+                </button>
                 <button class="admin-refresh ${dataLoading ? 'spinning' : ''}" id="btn-refresh" title="Refresh data">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
                   Refresh
@@ -404,12 +408,13 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
           const el = document.getElementById('admin-user');
           if (el && user?.email) el.textContent = user.email;
         });
+        root.querySelector('#btn-header-analytics')!.addEventListener('click', () => { activeTab = 'analytics'; analyticsData = null; analyticsError = ''; editId = null; creatingNew = false; deleteConfirmId = null; render(); });
         root.querySelector('#btn-refresh')!.addEventListener('click', async () => { await loadAll(); render(); });
         root.querySelector('#btn-logout')!.addEventListener('click', () => void doLogout());
         const errBtn = root.querySelector('#dismiss-err');
         if (errBtn) errBtn.addEventListener('click', () => { saveError = ''; render(); });
         root.querySelectorAll('[data-tab]').forEach((btn) =>
-          btn.addEventListener('click', () => { activeTab = (btn as HTMLElement).dataset.tab as Tab; editId = null; creatingNew = false; deleteConfirmId = null; render(); if (activeTab === 'analytics') wireAnalytics(); }),
+          btn.addEventListener('click', () => { activeTab = (btn as HTMLElement).dataset.tab as Tab; editId = null; creatingNew = false; deleteConfirmId = null; render(); }),
         );
         if (activeTab === 'inquiries') wireInquiries();
         if (activeTab === 'faqs') wireFaqs();
@@ -625,9 +630,6 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
         const notifyEmail = getSetting('notification_email');
         const resendKey = getSetting('resend_api_key');
         const notifConfigured = !!notifyEmail && !!resendKey;
-        const gaPropertyId = getSetting('ga_property_id');
-        const gaClientEmail = getSetting('ga_client_email');
-        const gaConfigured = !!gaPropertyId && !!gaClientEmail;
         return `
           <h2 class="admin-section-title">Settings</h2>
 
@@ -671,55 +673,14 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
             </div>
           </div>
 
-          <div class="admin-card" style="margin-bottom:1.25rem">
+          <div class="admin-card admin-integration-card" style="margin-bottom:1.25rem">
             <div class="admin-card-head">
-              <h2>Google Analytics</h2>
-              ${gaConfigured
-                ? '<span class="admin-pill admin-pill-published">Connected</span>'
-                : '<span class="admin-pill admin-pill-draft">Not configured</span>'}
+              <div><h2>Google Analytics</h2><span class="admin-card-kicker">Traffic reporting</span></div>
+              <span class="admin-pill admin-pill-draft">Not connected</span>
             </div>
             <div class="admin-card-body">
-              <p style="font-size:.88rem;color:var(--a-muted);margin:0 0 1.25rem">
-                Connect Google Analytics 4 to see website traffic in the Analytics tab.
-                The credentials are stored securely as edge function secrets and managed by your support team.
-              </p>
-              ${!gaConfigured ? `
-                <div style="background:rgba(255,184,28,.08);border:1px solid rgba(255,184,28,.3);border-radius:8px;padding:.85rem 1rem;margin-bottom:1.25rem;font-size:.85rem;color:var(--a-text)">
-                  <b style="display:block;margin-bottom:.4rem">To enable analytics:</b>
-                  1. Set up a Google Cloud service account with GA4 Data API access<br>
-                  2. Add the service account email as a Viewer in your GA4 property<br>
-                  3. Provide your support team with the Property ID, client email, and private key<br>
-                  4. They will configure the secrets &mdash; analytics appears here automatically
-                </div>
-              ` : `
-                <div style="font-size:.85rem;color:var(--a-muted);margin-bottom:1rem">
-                  <b>Property ID:</b> ${esc(gaPropertyId)}<br>
-                  <b>Service Account:</b> ${esc(gaClientEmail)}
-                </div>
-              `}
-              <form id="ga-form">
-                <div class="admin-form-row">
-                  <div class="admin-form-field">
-                    <label>GA4 Property ID</label>
-                    <input type="text" id="ga-prop-id" value="${esc(gaPropertyId)}" placeholder="123456789" style="font-family:var(--a-mono)" />
-                  </div>
-                  <div class="admin-form-field">
-                    <label>Service Account Email</label>
-                    <input type="text" id="ga-client-email" value="${esc(gaClientEmail)}" placeholder="sa@project.iam.gserviceaccount.com" style="font-family:var(--a-mono);font-size:.85rem" />
-                  </div>
-                </div>
-                <div class="admin-form-field">
-                  <label>Private Key</label>
-                  <input type="password" id="ga-private-key" value="" placeholder="-----BEGIN PRIVATE KEY-----..." style="font-family:var(--a-mono);font-size:.82rem" />
-                  <span style="font-size:.78rem;color:var(--a-muted);margin-top:.3rem;display:block">Only enter the private key when first setting up or rotating credentials. Leave blank to keep the existing key.</span>
-                </div>
-                <div class="admin-form-actions">
-                  <button type="submit" class="admin-btn admin-btn-amber admin-btn-sm" ${saving ? 'disabled' : ''}>
-                    ${saving ? '<span class="admin-spin-inline"></span> Saving…' : 'Save GA Settings'}
-                  </button>
-                  ${gaConfigured ? '<span style="font-size:.82rem;color:var(--a-green);font-weight:600">&#10003; Analytics connected</span>' : ''}
-                </div>
-              </form>
+              <p style="font-size:.88rem;color:var(--a-muted);margin:0 0 1rem">Analytics credentials stay server-side and are never stored in this editable settings list.</p>
+              <button class="admin-btn admin-btn-navy admin-btn-sm" id="settings-open-analytics">Open Analytics</button>
             </div>
           </div>
 
@@ -795,29 +756,8 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
             render();
           });
         }
-        const gaForm = root.querySelector('#ga-form') as HTMLFormElement | null;
-        if (gaForm) {
-          gaForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const propId = (root.querySelector('#ga-prop-id') as HTMLInputElement).value.trim();
-            const clientEmail = (root.querySelector('#ga-client-email') as HTMLInputElement).value.trim();
-            const privateKey = (root.querySelector('#ga-private-key') as HTMLInputElement).value.trim();
-            saving = true;
-            saveError = '';
-            render();
-            const { error: e1 } = await supabase.from('settings').upsert({ key: 'ga_property_id', value: propId, updated_at: new Date().toISOString() });
-            const { error: e2 } = await supabase.from('settings').upsert({ key: 'ga_client_email', value: clientEmail, updated_at: new Date().toISOString() });
-            if (e1) saveError = e1.message;
-            else if (e2) saveError = e2.message;
-            if (privateKey) {
-              const { error: e3 } = await supabase.from('settings').upsert({ key: 'ga_private_key', value: privateKey, updated_at: new Date().toISOString() });
-              if (e3) saveError = e3.message;
-            }
-            saving = false;
-            if (!saveError) { await loadAll(); analyticsData = null; }
-            render();
-          });
-        }
+        const openAnalytics = root.querySelector('#settings-open-analytics');
+        if (openAnalytics) openAnalytics.addEventListener('click', () => { activeTab = 'analytics'; render(); });
         const newForm = root.querySelector('#set-new-form') as HTMLFormElement | null;
         if (newForm) {
           newForm.addEventListener('submit', (e) => {

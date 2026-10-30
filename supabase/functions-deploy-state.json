@@ -1,13 +1,13 @@
 {
   "projectId": "72250767",
   "functions": {
+    "ga-analytics": {
+      "hasChanged": false,
+      "hash": "55215c0ccc0ce5b64cbb751b448e30fecb3c550b7151fcfa7396421b0e113000"
+    },
     "notify-inquiry": {
       "hasChanged": false,
       "hash": "1e3ba31b71960b606c4b6a09c3c068b7ed85911d6ff049cba0dd919f18cda0d3"
-    },
-    "ga-analytics": {
-      "hasChanged": false,
-      "hash": "4e672d6cc3761998fc1a08f3fb826bef244c205e92312f18c1041a248b7966e5"
     }
   }
 }

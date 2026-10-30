@@ -1,5 +1,3 @@
-import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -12,27 +10,16 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Read GA credentials from the settings table (stored via admin panel)
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceKey);
-
-    const [{ data: propData }, { data: emailData }, { data: keyData }] = await Promise.all([
-      supabase.from("settings").select("value").eq("key", "ga_property_id").maybeSingle(),
-      supabase.from("settings").select("value").eq("key", "ga_client_email").maybeSingle(),
-      supabase.from("settings").select("value").eq("key", "ga_private_key").maybeSingle(),
-    ]);
-
-    const propertyId = propData?.value ?? "";
-    const clientEmail = emailData?.value ?? "";
-    const privateKeyRaw = keyData?.value ?? "";
+    const propertyId = Deno.env.get("GA_PROPERTY_ID") ?? "";
+    const clientEmail = Deno.env.get("GA_CLIENT_EMAIL") ?? "";
+    const privateKeyRaw = Deno.env.get("GA_PRIVATE_KEY") ?? "";
 
     if (!propertyId || !clientEmail || !privateKeyRaw) {
       return new Response(
         JSON.stringify({
           error: "NOT_CONFIGURED",
           message:
-            "Google Analytics is not configured. Set GA4 Property ID, Service Account Email, and Private Key in the admin Settings tab.",
+            "Google Analytics is not connected yet. Ask the site administrator to add the GA4 service account secrets."
         }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
@@ -174,7 +161,7 @@ Deno.serve(async (req: Request) => {
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: "Analytics is temporarily unavailable." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

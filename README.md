@@ -83,6 +83,18 @@ Row-level security is enabled on all tables. Public visitors can only insert inq
 
 Migrations are in `supabase/migrations/` and edge function source is in `supabase/functions/notify-inquiry/`.
 
+## Auction gallery
+
+The auction page (`/auction`) displays a photo gallery sourced from `public/images/auction/`. The page automatically loads `auction-01.webp` through `auction-12.webp` (12 slots).
+
+To refresh the gallery with new photos:
+
+1. Name your photos `auction-01.webp` through `auction-12.webp` (WebP format, landscape orientation recommended).
+2. Replace the existing files in `public/images/auction/`.
+3. Deploy — the next build picks up the new images automatically.
+
+The gallery always shows 12 images, so replacing the files in place is all that's needed. Keep image sizes under 500 KB each for fast loading.
+
 ## Deploying
 
 ### Netlify

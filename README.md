@@ -41,7 +41,14 @@ Submissions appear in the admin panel under **Inquiries**, where staff can view 
 
 ## Admin panel
 
-The admin panel at `/admin` is gated behind Supabase email/password authentication. It is excluded from search engines via `noindex`.
+The admin panel is available at `/admin` and is gated behind Supabase email/password authentication. It is excluded from search engines via `noindex`.
+
+#### Sign-in
+
+- Use the email address and password of an authorized Supabase account.
+- Admin credentials are not stored in this repository.
+- If you forget the password, enter the account email on the sign-in screen and select **Forgot password?** to receive a reset email.
+- If no authorized account exists yet, create one in the Supabase project’s Authentication users area before signing in.
 
 ### Modules
 

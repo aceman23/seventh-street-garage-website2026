@@ -22,7 +22,25 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
       import { createClient } from '@supabase/supabase-js';
       import type { Inquiry, Faq, Setting, Vehicle } from '@/lib/supabase';
 
-      type Tab = 'inquiries' | 'faqs' | 'vehicles' | 'settings';
+      type Tab = 'inquiries' | 'faqs' | 'vehicles' | 'analytics' | 'settings';
+
+      interface AnalyticsData {
+        dateRange: { startDate: string; endDate: string };
+        metrics: {
+          activeUsers: number;
+          sessions: number;
+          averageSessionDuration: number;
+          screenPageViews: number;
+          newUsers: number;
+        };
+        dailyData: { date: string; activeUsers: number; sessions: number }[];
+        channels: { name: string; users: number }[];
+        topPages: { title: string; path: string; views: number }[];
+      }
+
+      let analyticsData: AnalyticsData | null = null;
+      let analyticsLoading = false;
+      let analyticsError = '';
 
       const root = document.getElementById('admin-root')!;
 
@@ -344,6 +362,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
           { key: 'inquiries', label: 'Inquiries', count: inquiries.length },
           { key: 'faqs', label: 'FAQs', count: faqs.length },
           { key: 'vehicles', label: 'Vehicles', count: vehicles.length },
+          { key: 'analytics', label: 'Analytics', count: null },
           { key: 'settings', label: 'Settings', count: settings.length },
         ];
         root.innerHTML = `
@@ -376,6 +395,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
               ${activeTab === 'inquiries' ? renderInquiries() : ''}
               ${activeTab === 'faqs' ? renderFaqs() : ''}
               ${activeTab === 'vehicles' ? renderVehicles() : ''}
+              ${activeTab === 'analytics' ? renderAnalytics() : ''}
               ${activeTab === 'settings' ? renderSettings() : ''}
             </main>
           </div>
@@ -389,11 +409,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
         const errBtn = root.querySelector('#dismiss-err');
         if (errBtn) errBtn.addEventListener('click', () => { saveError = ''; render(); });
         root.querySelectorAll('[data-tab]').forEach((btn) =>
-          btn.addEventListener('click', () => { activeTab = (btn as HTMLElement).dataset.tab as Tab; editId = null; creatingNew = false; deleteConfirmId = null; render(); }),
+          btn.addEventListener('click', () => { activeTab = (btn as HTMLElement).dataset.tab as Tab; editId = null; creatingNew = false; deleteConfirmId = null; render(); if (activeTab === 'analytics') wireAnalytics(); }),
         );
         if (activeTab === 'inquiries') wireInquiries();
         if (activeTab === 'faqs') wireFaqs();
         if (activeTab === 'vehicles') wireVehicles();
+        if (activeTab === 'analytics') { loadAnalytics(); wireAnalytics(); }
         if (activeTab === 'settings') wireSettings();
       }
 
@@ -604,6 +625,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
         const notifyEmail = getSetting('notification_email');
         const resendKey = getSetting('resend_api_key');
         const notifConfigured = !!notifyEmail && !!resendKey;
+        const gaPropertyId = getSetting('ga_property_id');
+        const gaClientEmail = getSetting('ga_client_email');
+        const gaConfigured = !!gaPropertyId && !!gaClientEmail;
         return `
           <h2 class="admin-section-title">Settings</h2>
 
@@ -642,6 +666,58 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
                     ${saving ? '<span class="admin-spin-inline"></span> Saving…' : 'Save Notification Settings'}
                   </button>
                   ${notifConfigured ? '<span style="font-size:.82rem;color:var(--a-green);font-weight:600">&#10003; Emails are being sent</span>' : ''}
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="admin-card" style="margin-bottom:1.25rem">
+            <div class="admin-card-head">
+              <h2>Google Analytics</h2>
+              ${gaConfigured
+                ? '<span class="admin-pill admin-pill-published">Connected</span>'
+                : '<span class="admin-pill admin-pill-draft">Not configured</span>'}
+            </div>
+            <div class="admin-card-body">
+              <p style="font-size:.88rem;color:var(--a-muted);margin:0 0 1.25rem">
+                Connect Google Analytics 4 to see website traffic in the Analytics tab.
+                The credentials are stored securely as edge function secrets and managed by your support team.
+              </p>
+              ${!gaConfigured ? `
+                <div style="background:rgba(255,184,28,.08);border:1px solid rgba(255,184,28,.3);border-radius:8px;padding:.85rem 1rem;margin-bottom:1.25rem;font-size:.85rem;color:var(--a-text)">
+                  <b style="display:block;margin-bottom:.4rem">To enable analytics:</b>
+                  1. Set up a Google Cloud service account with GA4 Data API access<br>
+                  2. Add the service account email as a Viewer in your GA4 property<br>
+                  3. Provide your support team with the Property ID, client email, and private key<br>
+                  4. They will configure the secrets &mdash; analytics appears here automatically
+                </div>
+              ` : `
+                <div style="font-size:.85rem;color:var(--a-muted);margin-bottom:1rem">
+                  <b>Property ID:</b> ${esc(gaPropertyId)}<br>
+                  <b>Service Account:</b> ${esc(gaClientEmail)}
+                </div>
+              `}
+              <form id="ga-form">
+                <div class="admin-form-row">
+                  <div class="admin-form-field">
+                    <label>GA4 Property ID</label>
+                    <input type="text" id="ga-prop-id" value="${esc(gaPropertyId)}" placeholder="123456789" style="font-family:var(--a-mono)" />
+                  </div>
+                  <div class="admin-form-field">
+                    <label>Service Account Email</label>
+                    <input type="text" id="ga-client-email" value="${esc(gaClientEmail)}" placeholder="sa@project.iam.gserviceaccount.com" style="font-family:var(--a-mono);font-size:.85rem" />
+                  </div>
+                </div>
+                <div class="admin-form-field">
+                  <label>Private Key</label>
+                  <input type="password" id="ga-private-key" value="" placeholder="-----BEGIN PRIVATE KEY-----..." style="font-family:var(--a-mono);font-size:.82rem" />
+                  <span style="font-size:.78rem;color:var(--a-muted);margin-top:.3rem;display:block">Only enter the private key when first setting up or rotating credentials. Leave blank to keep the existing key.</span>
+                </div>
+                <div class="admin-form-actions">
+                  <button type="submit" class="admin-btn admin-btn-amber admin-btn-sm" ${saving ? 'disabled' : ''}>
+                    ${saving ? '<span class="admin-spin-inline"></span> Saving…' : 'Save GA Settings'}
+                  </button>
+                  ${gaConfigured ? '<span style="font-size:.82rem;color:var(--a-green);font-weight:600">&#10003; Analytics connected</span>' : ''}
                 </div>
               </form>
             </div>
@@ -716,6 +792,29 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
             else if (e2) saveError = e2.message;
             saving = false;
             if (!saveError) await loadAll();
+            render();
+          });
+        }
+        const gaForm = root.querySelector('#ga-form') as HTMLFormElement | null;
+        if (gaForm) {
+          gaForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const propId = (root.querySelector('#ga-prop-id') as HTMLInputElement).value.trim();
+            const clientEmail = (root.querySelector('#ga-client-email') as HTMLInputElement).value.trim();
+            const privateKey = (root.querySelector('#ga-private-key') as HTMLInputElement).value.trim();
+            saving = true;
+            saveError = '';
+            render();
+            const { error: e1 } = await supabase.from('settings').upsert({ key: 'ga_property_id', value: propId, updated_at: new Date().toISOString() });
+            const { error: e2 } = await supabase.from('settings').upsert({ key: 'ga_client_email', value: clientEmail, updated_at: new Date().toISOString() });
+            if (e1) saveError = e1.message;
+            else if (e2) saveError = e2.message;
+            if (privateKey) {
+              const { error: e3 } = await supabase.from('settings').upsert({ key: 'ga_private_key', value: privateKey, updated_at: new Date().toISOString() });
+              if (e3) saveError = e3.message;
+            }
+            saving = false;
+            if (!saveError) { await loadAll(); analyticsData = null; }
             render();
           });
         }
@@ -908,6 +1007,250 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
             btn.addEventListener('click', () => { deleteConfirmId = null; render(); }),
           );
         }
+      }
+
+      // ---------- Analytics ----------
+      async function loadAnalytics(): Promise<void> {
+        if (analyticsData || analyticsLoading) return;
+        analyticsLoading = true;
+        analyticsError = '';
+        render();
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) { analyticsError = 'Not authenticated'; render(); return; }
+          const res = await fetch(`${supabaseUrl}/functions/v1/ga-analytics`, {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            analyticsError = body.error === 'NOT_CONFIGURED'
+              ? 'NOT_CONFIGURED'
+              : body.detail || body.error || `Error ${res.status}`;
+            analyticsLoading = false;
+            render();
+            return;
+          }
+          analyticsData = await res.json() as AnalyticsData;
+        } catch (err) {
+          analyticsError = (err as Error).message;
+        }
+        analyticsLoading = false;
+        render();
+      }
+
+      function fmtDuration(seconds: number): string {
+        const m = Math.floor(seconds / 60);
+        const s = Math.round(seconds % 60);
+        return `${m}m ${s}s`;
+      }
+
+      function fmtDateShort(dateStr: string): string {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+
+      function sparkline(values: number[], width: number, height: number): string {
+        if (values.length === 0) return '';
+        const max = Math.max(...values, 1);
+        const step = values.length > 1 ? width / (values.length - 1) : width;
+        const points = values.map((v, i) => {
+          const x = i * step;
+          const y = height - (v / max) * height;
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(' ');
+        const areaPoints = `0,${height} ${points} ${width},${height}`;
+        return `<svg class="ga-spark" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" width="${width}" height="${height}">
+          <polygon points="${areaPoints}" fill="rgba(255,184,28,.12)" />
+          <polyline points="${points}" fill="none" stroke="var(--a-amber)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+        </svg>`;
+      }
+
+      function channelBar(users: number, maxUsers: number): string {
+        const pct = maxUsers > 0 ? (users / maxUsers) * 100 : 0;
+        return `<div class="ga-bar-track"><div class="ga-bar-fill" style="width:${pct}%"></div></div>`;
+      }
+
+      function renderAnalytics(): string {
+        if (analyticsLoading && !analyticsData) {
+          return `<div class="admin-empty"><span class="admin-spin-inline" style="width:24px;height:24px;border-width:3px;margin-bottom:.75rem"></span><p>Loading analytics…</p></div>`;
+        }
+
+        if (analyticsError === 'NOT_CONFIGURED') {
+          return renderAnalyticsNotConfigured();
+        }
+
+        if (analyticsError && !analyticsData) {
+          return `
+            <h2 class="admin-section-title">Analytics</h2>
+            <div class="admin-error-banner">${esc(analyticsError)}<button id="dismiss-err">&times;</button></div>
+            <button class="admin-btn admin-btn-ghost admin-btn-sm" id="ga-retry">Retry</button>
+          `;
+        }
+
+        if (!analyticsData) {
+          return `
+            <h2 class="admin-section-title">Analytics</h2>
+            <div class="admin-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+              <p>No analytics data loaded yet.</p>
+              <button class="admin-btn admin-btn-amber admin-btn-sm" id="ga-load">Load Analytics</button>
+            </div>
+          `;
+        }
+
+        const d = analyticsData;
+        const m = d.metrics;
+        const dailyAU = d.dailyData.map((dd) => dd.activeUsers);
+        const dailySess = d.dailyData.map((dd) => dd.sessions);
+        const maxChannel = Math.max(...d.channels.map((c) => c.users), 1);
+
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem">
+            <h2 class="admin-section-title">Analytics</h2>
+            <span style="font-size:.82rem;color:var(--a-muted)">${fmtDateShort(d.dateRange.startDate)} — ${fmtDateShort(d.dateRange.endDate)} (30 days)</span>
+          </div>
+
+          <div class="ga-metric-grid">
+            <div class="ga-metric-card">
+              <span class="ga-metric-label">Active Users</span>
+              <span class="ga-metric-value">${m.activeUsers.toLocaleString()}</span>
+              ${sparkline(dailyAU, 200, 32)}
+            </div>
+            <div class="ga-metric-card">
+              <span class="ga-metric-label">Sessions</span>
+              <span class="ga-metric-value">${m.sessions.toLocaleString()}</span>
+              ${sparkline(dailySess, 200, 32)}
+            </div>
+            <div class="ga-metric-card">
+              <span class="ga-metric-label">Avg Session Duration</span>
+              <span class="ga-metric-value">${fmtDuration(m.averageSessionDuration)}</span>
+              <div style="height:32px"></div>
+            </div>
+            <div class="ga-metric-card">
+              <span class="ga-metric-label">Total Page Views</span>
+              <span class="ga-metric-value">${m.screenPageViews.toLocaleString()}</span>
+              <div style="height:32px"></div>
+            </div>
+          </div>
+
+          <div class="ga-charts-row">
+            <div class="admin-card" style="flex:1;min-width:280px">
+              <div class="admin-card-head"><h2>New Users by Channel</h2></div>
+              <div class="admin-card-body">
+                ${d.channels.length === 0
+                  ? '<p style="color:var(--a-muted);font-size:.9rem">No channel data.</p>'
+                  : d.channels.map((c) => `
+                    <div class="ga-channel-row">
+                      <span class="ga-channel-name">${esc(c.name)}</span>
+                      <div class="ga-channel-bar">${channelBar(c.users, maxChannel)}<span class="ga-channel-val">${c.users}</span></div>
+                    </div>
+                  `).join('')
+                }
+              </div>
+            </div>
+
+            <div class="admin-card" style="flex:1;min-width:280px">
+              <div class="admin-card-head"><h2>Top Pages</h2></div>
+              <div class="admin-card-body">
+                ${d.topPages.length === 0
+                  ? '<p style="color:var(--a-muted);font-size:.9rem">No page data.</p>'
+                  : `<table class="admin-table"><tbody>
+                    ${d.topPages.map((p) => `
+                      <tr>
+                        <td style="font-size:.85rem">
+                          <b>${esc(p.title || p.path)}</b>
+                          <br><span style="font-size:.78rem;color:var(--a-muted)">${esc(p.path)}</span>
+                        </td>
+                        <td style="text-align:right;font-family:var(--a-mono);font-weight:600;white-space:nowrap">${p.views.toLocaleString()}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody></table>`
+                }
+              </div>
+            </div>
+          </div>
+
+          <button class="admin-btn admin-btn-ghost admin-btn-sm" id="ga-refresh" style="margin-top:1rem">Refresh Analytics</button>
+        `;
+      }
+
+      function renderAnalyticsNotConfigured(): string {
+        return `
+          <h2 class="admin-section-title">Analytics</h2>
+          <div class="admin-card">
+            <div class="admin-card-body">
+              <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--a-amber-deep)" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                <h3 style="margin:0;font-family:var(--a-display);font-weight:800;font-size:.95rem;text-transform:uppercase">Google Analytics Not Connected</h3>
+              </div>
+              <p style="font-size:.88rem;color:var(--a-muted);margin:0 0 1.25rem">Connect your Google Analytics 4 property to see website traffic data here. Follow these steps:</p>
+
+              <div class="ga-setup-steps">
+                <div class="ga-step">
+                  <span class="ga-step-num">1</span>
+                  <div>
+                    <b>Enable the GA4 Data API</b><br>
+                    <span style="font-size:.85rem;color:var(--a-muted)">Go to the <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:var(--a-navy);font-weight:600">Google Cloud Console</a>, create or select a project, and enable the <b>Google Analytics Data API</b>.</span>
+                  </div>
+                </div>
+                <div class="ga-step">
+                  <span class="ga-step-num">2</span>
+                  <div>
+                    <b>Create a Service Account</b><br>
+                    <span style="font-size:.85rem;color:var(--a-muted)">In the Cloud Console, go to IAM &amp; Admin &rarr; Service Accounts. Create a new service account and generate a JSON key file.</span>
+                  </div>
+                </div>
+                <div class="ga-step">
+                  <span class="ga-step-num">3</span>
+                  <div>
+                    <b>Add the Service Account to GA4</b><br>
+                    <span style="font-size:.85rem;color:var(--a-muted)">In Google Analytics, go to Admin &rarr; Property Access Management. Add the service account email as a Viewer.</span>
+                  </div>
+                </div>
+                <div class="ga-step">
+                  <span class="ga-step-num">4</span>
+                  <div>
+                    <b>Get your Property ID</b><br>
+                    <span style="font-size:.85rem;color:var(--a-muted)">In Google Analytics, go to Admin &rarr; Property Settings. Copy the numeric Property ID.</span>
+                  </div>
+                </div>
+                <div class="ga-step">
+                  <span class="ga-step-num">5</span>
+                  <div>
+                    <b>Enter credentials in the Settings tab</b><br>
+                    <span style="font-size:.85rem;color:var(--a-muted)">Go to the <b>Settings</b> tab in this admin panel and enter:<br>
+                    &bull; <b>GA4 Property ID</b> &mdash; the numeric property ID<br>
+                    &bull; <b>Service Account Email</b> &mdash; the email from the JSON key (e.g. <code style="font-family:var(--a-mono)">my-sa@project.iam.gserviceaccount.com</code>)<br>
+                    &bull; <b>Private Key</b> &mdash; the full private key string from the JSON file (starts with <code style="font-family:var(--a-mono)">-----BEGIN PRIVATE KEY-----</code>)</span>
+                  </div>
+                </div>
+              </div>
+              <button class="admin-btn admin-btn-ghost admin-btn-sm" id="ga-retry" style="margin-top:1rem">Check Connection</button>
+            </div>
+          </div>
+        `;
+      }
+
+      function wireAnalytics(): void {
+        const retry = root.querySelector('#ga-retry');
+        if (retry) retry.addEventListener('click', () => {
+          analyticsData = null;
+          analyticsError = '';
+          void loadAnalytics();
+        });
+        const refresh = root.querySelector('#ga-refresh');
+        if (refresh) refresh.addEventListener('click', () => {
+          analyticsData = null;
+          analyticsError = '';
+          void loadAnalytics();
+        });
+        const load = root.querySelector('#ga-load');
+        if (load) load.addEventListener('click', () => void loadAnalytics());
+        const dismiss = root.querySelector('#dismiss-err');
+        if (dismiss) dismiss.addEventListener('click', () => { analyticsError = ''; render(); });
       }
 
       // ---------- Password recovery ----------

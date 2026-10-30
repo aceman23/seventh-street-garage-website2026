@@ -1,2 +1,5 @@
 [functions.notify-inquiry]
 verify_jwt = false
+
+[functions.ga-analytics]
+verify_jwt = true

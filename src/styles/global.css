@@ -181,6 +181,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .vsb-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--amber);color:var(--ink);flex:none}
 .vsb-icon svg{width:18px;height:18px}
 .vsb-text b{color:var(--amber);font-weight:800}
+.vsb-button{display:inline-flex;align-items:center;gap:.35rem;background:var(--amber);color:var(--ink);border-radius:999px;padding:.5rem .85rem;font-family:var(--body);font-size:.78rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;transition:background .15s,transform .15s}
+.vehicle-search-banner a:hover .vsb-button{background:#FFC845;transform:translateX(2px)}
+.vsb-button svg{width:15px;height:15px}
 
 /* carousel */
 .carousel{position:relative;border-radius:14px;overflow:hidden;background:var(--navy);box-shadow:0 40px 80px -30px rgba(0,0,0,.7),0 0 0 1px var(--line-dark)}

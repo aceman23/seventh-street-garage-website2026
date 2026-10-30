@@ -28,8 +28,9 @@ Deno.serve(async (req: Request) => {
     // Handle escaped newlines in private key (common when stored as env var)
     const privateKey = privateKeyRaw.replace(/\\n/g, "\n");
 
-    // Sign JWT for Google service account authentication
-    const token = await signJwt(clientEmail, privateKey);
+    // Exchange the signed service-account JWT for a short-lived Google access token
+    const signedJwt = await signJwt(clientEmail, privateKey);
+    const token = await exchangeJwtForAccessToken(signedJwt);
 
     // Query GA4 Data API for the last 30 days
     const now = new Date();
@@ -168,6 +169,27 @@ Deno.serve(async (req: Request) => {
 });
 
 // Sign a JWT for Google service account authentication using Web Crypto API
+async function exchangeJwtForAccessToken(signedJwt: string): Promise<string> {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: signedJwt,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Google authentication failed");
+  }
+
+  const body = await response.json() as { access_token?: string };
+  if (!body.access_token) {
+    throw new Error("Google did not return an access token");
+  }
+  return body.access_token;
+}
+
 async function signJwt(clientEmail: string, privateKeyPem: string): Promise<string> {
   const header = { alg: "RS256", typ: "JWT" };
   const now = Math.floor(Date.now() / 1000);
@@ -184,7 +206,7 @@ async function signJwt(clientEmail: string, privateKeyPem: string): Promise<stri
   const unsigned = `${encHeader}.${encPayload}`;
 
   const key = await importPemKey(privateKeyPem);
-  const sig = await crypto.subtle.sign("RS256", key, new TextEncoder().encode(unsigned));
+  const sig = await crypto.subtle.sign({ name: "RSASSA-PKCS1-v1_5" }, key, new TextEncoder().encode(unsigned));
   const encSig = b64encode(new Uint8Array(sig));
 
   return `${unsigned}.${encSig}`;

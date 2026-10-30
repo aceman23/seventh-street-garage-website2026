@@ -1160,11 +1160,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
                 <div class="ga-step">
                   <span class="ga-step-num">5</span>
                   <div>
-                    <b>Enter credentials in the Settings tab</b><br>
-                    <span style="font-size:.85rem;color:var(--a-muted)">Go to the <b>Settings</b> tab in this admin panel and enter:<br>
+                    <b>Send the credentials to your site administrator</b><br>
+                    <span style="font-size:.85rem;color:var(--a-muted)">Email your developer the following three values so they can add them as server-side secrets:<br>
                     &bull; <b>GA4 Property ID</b> &mdash; the numeric property ID<br>
                     &bull; <b>Service Account Email</b> &mdash; the email from the JSON key (e.g. <code style="font-family:var(--a-mono)">my-sa@project.iam.gserviceaccount.com</code>)<br>
-                    &bull; <b>Private Key</b> &mdash; the full private key string from the JSON file (starts with <code style="font-family:var(--a-mono)">-----BEGIN PRIVATE KEY-----</code>)</span>
+                    &bull; <b>Private Key</b> &mdash; the full private key string from the JSON file (starts with <code style="font-family:var(--a-mono)">-----BEGIN PRIVATE KEY-----</code>)<br>
+                    These are stored as secure server secrets, never in the browser-editable settings.</span>
                   </div>
                 </div>
               </div>

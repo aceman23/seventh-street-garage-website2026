@@ -1,0 +1,474 @@
+---
+import Base from '@/layouts/Base.astro';
+import PageHero from '@/components/PageHero.astro';
+import CallCard from '@/components/CallCard.astro';
+import { webPage } from '@/lib/schema';
+import type { Node } from '@/lib/schema';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
+
+const graph: Node[] = [
+  webPage(
+    '/search-vehicles/',
+    'Search Impounded Vehicles',
+    'Search for your towed or impounded vehicle by VIN or license plate. Find out if Seventh Street Garage has your vehicle and how to claim it.',
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Search Vehicles', path: '/search-vehicles/' },
+    ],
+  ),
+];
+---
+<Base
+  title="Search Impounded Vehicles | Seventh Street Garage"
+  description="Search for your towed or impounded vehicle by VIN or license plate. Find out if Seventh Street Garage has your vehicle and how to claim it."
+  path="/search-vehicles/"
+  graph={graph}
+  active="release"
+>
+  <PageHero
+    crumbs={[
+      { name: 'Home', path: '/' },
+      { name: 'Search Vehicles', path: '/search-vehicles/' },
+    ]}
+    eyebrow="Vehicle lookup"
+    h1="Search for your vehicle"
+    lead="Enter your VIN or license plate to see if we have your vehicle. If you find it here, call (310) 856-1980 to confirm release requirements and fees."
+    image="impound-gate"
+    imageAlt="Seventh Street Garage impound gate and storage yard"
+  />
+
+  <section class="band band-white" aria-labelledby="search-heading">
+    <div class="wrap">
+      <div id="vehicle-search-app"
+        data-supabase-url={supabaseUrl}
+        data-supabase-key={supabaseAnonKey}
+      >
+        <div class="vs-search-box">
+          <div class="vs-search-tabs">
+            <button type="button" class="vs-tab active" data-search-type="plate">License Plate</button>
+            <button type="button" class="vs-tab" data-search-type="vin">VIN</button>
+          </div>
+          <form id="vs-form" class="vs-form">
+            <div class="vs-input-row">
+              <input
+                type="text"
+                id="vs-plate-input"
+                class="vs-input"
+                placeholder="Enter license plate (e.g. 7ABC123)"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <input
+                type="text"
+                id="vs-state-input"
+                class="vs-state-input"
+                placeholder="CA"
+                maxlength="3"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <input
+                type="text"
+                id="vs-vin-input"
+                class="vs-input vs-vin-hidden"
+                placeholder="Enter 17-character VIN"
+                autocomplete="off"
+                spellcheck="false"
+                maxlength="17"
+              />
+              <button type="submit" class="btn btn-amber vs-search-btn">Search</button>
+            </div>
+          </form>
+          <p id="vs-error" class="vs-error" hidden></p>
+        </div>
+
+        <div id="vs-results" class="vs-results"></div>
+
+        <div id="vs-empty" class="vs-empty" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <h3>No vehicle found</h3>
+          <p>We could not find a vehicle matching your search. It may not be in our system yet, or it may have been released.</p>
+          <p>If you believe we have your vehicle, please call us at <a href="tel:+13108561980">(310) 856-1980</a> with your plate or VIN and we will check for you.</p>
+        </div>
+
+        <div id="vs-initial" class="vs-initial">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="56" height="56"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
+          <h3>Search for your vehicle</h3>
+          <p>Enter your license plate number or VIN above to check if your vehicle is in our system.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-concrete" aria-labelledby="next-heading">
+    <div class="wrap">
+      <p class="eyebrow">Found your vehicle?</p>
+      <h2 id="next-heading">Next steps to claim it</h2>
+      <div class="need">
+        <div class="card">
+          <h3>Call dispatch</h3>
+          <p>Call (310) 856-1980 with your plate or VIN to confirm fees and any holds.</p>
+        </div>
+        <div class="card">
+          <h3>Get a release</h3>
+          <p>If police impounded it, you may need a release from that agency first.</p>
+        </div>
+        <div class="card">
+          <h3>Pick it up</h3>
+          <p>Visit 1615 E Mauretania St, Wilmington, 8am–5pm, with ID, registration, and payment.</p>
+        </div>
+      </div>
+      <div style="margin-top:2rem;display:flex;justify-content:center">
+        <CallCard />
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .vs-search-box {
+      max-width: 640px;
+      margin: 0 auto 2rem;
+      background: var(--paper, #F7F8FA);
+      border: 1px solid var(--line, #D5DAE3);
+      border-radius: 14px;
+      padding: 1.75rem;
+    }
+    .vs-search-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.25rem;
+      border-bottom: 2px solid var(--line, #D5DAE3);
+    }
+    .vs-tab {
+      flex: 1;
+      padding: .75rem;
+      background: none;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-family: var(--display, "Archivo", sans-serif);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: .82rem;
+      letter-spacing: .04em;
+      color: var(--muted, #556074);
+      cursor: pointer;
+      transition: .15s;
+    }
+    .vs-tab.active {
+      color: var(--navy, #13213F);
+      border-bottom-color: var(--amber, #FFB81C);
+    }
+    .vs-input-row {
+      display: flex;
+      gap: .65rem;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .vs-input {
+      flex: 1;
+      min-width: 180px;
+      padding: .75rem .9rem;
+      border: 1px solid var(--line, #D5DAE3);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: var(--mono, "JetBrains Mono", monospace);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      outline: none;
+      transition: .15s;
+    }
+    .vs-input:focus {
+      border-color: var(--navy, #13213F);
+      box-shadow: 0 0 0 3px rgba(19,33,63,.12);
+    }
+    .vs-state-input {
+      width: 70px;
+      padding: .75rem .5rem;
+      border: 1px solid var(--line, #D5DAE3);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: var(--mono, "JetBrains Mono", monospace);
+      text-transform: uppercase;
+      text-align: center;
+      outline: none;
+      transition: .15s;
+    }
+    .vs-state-input:focus {
+      border-color: var(--navy, #13213F);
+      box-shadow: 0 0 0 3px rgba(19,33,63,.12);
+    }
+    .vs-vin-hidden { display: none; }
+    .vs-search-btn {
+      white-space: nowrap;
+    }
+    .vs-error {
+      margin-top: 1rem;
+      background: rgba(229,72,77,.08);
+      border: 1px solid rgba(229,72,77,.3);
+      border-radius: 8px;
+      padding: .7rem .9rem;
+      color: #c0392b;
+      font-size: .9rem;
+    }
+    .vs-results {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .vs-vehicle-card {
+      background: #fff;
+      border: 1px solid var(--line, #D5DAE3);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+    .vs-vehicle-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 0;
+    }
+    @media(max-width:600px) {
+      .vs-vehicle-grid { grid-template-columns: 1fr; }
+    }
+    .vs-vehicle-img {
+      width: 100%;
+      height: 100%;
+      min-height: 160px;
+      object-fit: cover;
+      background: var(--paper, #F7F8FA);
+    }
+    .vs-vehicle-img-placeholder {
+      width: 100%;
+      min-height: 160px;
+      background: var(--paper, #F7F8FA);
+      display: grid;
+      place-items: center;
+      color: var(--muted, #556074);
+      opacity: .4;
+    }
+    .vs-vehicle-info {
+      padding: 1.25rem 1.5rem;
+    }
+    .vs-vehicle-title {
+      font-family: var(--display, "Archivo", sans-serif);
+      font-weight: 800;
+      font-size: 1.25rem;
+      margin: 0 0 .5rem;
+    }
+    .vs-vehicle-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: .6rem .8rem;
+      margin-bottom: 1rem;
+    }
+    .vs-meta-item {
+      font-size: .88rem;
+    }
+    .vs-meta-label {
+      display: block;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted, #556074);
+      margin-bottom: .15rem;
+    }
+    .vs-meta-value {
+      font-weight: 600;
+    }
+    .vs-status {
+      display: inline-flex;
+      align-items: center;
+      gap: .35em;
+      padding: .25em .7em;
+      border-radius: 99px;
+      font-size: .75rem;
+      font-weight: 700;
+      font-family: var(--mono, "JetBrains Mono", monospace);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .vs-status-stored { background: rgba(255,184,28,.15); color: #b87d00; }
+    .vs-status-hold { background: rgba(229,72,77,.12); color: #c0392b; }
+    .vs-status-released { background: rgba(22,163,74,.12); color: #15803d; }
+    .vs-status-auction { background: rgba(19,33,63,.1); color: var(--navy, #13213F); }
+    .vs-public-note {
+      background: rgba(255,184,28,.08);
+      border: 1px solid rgba(255,184,28,.25);
+      border-radius: 8px;
+      padding: .65rem .85rem;
+      font-size: .88rem;
+      margin-bottom: 1rem;
+    }
+    .vs-vehicle-cta {
+      display: flex;
+      gap: .65rem;
+      flex-wrap: wrap;
+    }
+    .vs-empty, .vs-initial {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      color: var(--muted, #556074);
+    }
+    .vs-empty svg, .vs-initial svg {
+      opacity: .35;
+      margin-bottom: 1rem;
+    }
+    .vs-empty h3, .vs-initial h3 {
+      font-family: var(--display, "Archivo", sans-serif);
+      margin: 0 0 .5rem;
+    }
+    .vs-empty p, .vs-initial p {
+      margin: 0 0 .35rem;
+      font-size: .92rem;
+    }
+  </style>
+
+  <script>
+    const app = document.getElementById('vehicle-search-app')!;
+    const supabaseUrl = app.dataset.supabaseUrl ?? '';
+    const supabaseAnonKey = app.dataset.supabaseKey ?? '';
+
+    const form = document.getElementById('vs-form') as HTMLFormElement;
+    const plateInput = document.getElementById('vs-plate-input') as HTMLInputElement;
+    const stateInput = document.getElementById('vs-state-input') as HTMLInputElement;
+    const vinInput = document.getElementById('vs-vin-input') as HTMLInputElement;
+    const resultsDiv = document.getElementById('vs-results')!;
+    const emptyDiv = document.getElementById('vs-empty')!;
+    const initialDiv = document.getElementById('vs-initial')!;
+    const errorP = document.getElementById('vs-error')!;
+    const tabs = app.querySelectorAll('.vs-tab');
+
+    let searchType: 'plate' | 'vin' = 'plate';
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        searchType = (tab as HTMLElement).dataset.searchType as 'plate' | 'vin';
+        if (searchType === 'vin') {
+          plateInput.classList.add('vs-vin-hidden');
+          stateInput.classList.add('vs-vin-hidden');
+          vinInput.classList.remove('vs-vin-hidden');
+          plateInput.required = false;
+          stateInput.required = false;
+          vinInput.required = true;
+          vinInput.focus();
+        } else {
+          plateInput.classList.remove('vs-vin-hidden');
+          stateInput.classList.remove('vs-vin-hidden');
+          vinInput.classList.add('vs-vin-hidden');
+          plateInput.required = true;
+          stateInput.required = true;
+          vinInput.required = false;
+          plateInput.focus();
+        }
+        errorP.hidden = true;
+      });
+    });
+
+    function esc(s: string): string {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function statusLabel(status: string): string {
+      const labels: Record<string, string> = {
+        stored: 'In Storage',
+        released: 'Released',
+        auction: 'Pending Auction',
+        hold: 'On Hold',
+      };
+      return labels[status] ?? status;
+    }
+
+    function fmtDate(iso: string | null): string {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function renderVehicle(v: any): string {
+      const imgHtml = v.image_url
+        ? `<img src="${esc(v.image_url)}" alt="${esc(`${v.year ?? ''} ${v.make ?? ''} ${v.model ?? ''}`.trim())}" class="vs-vehicle-img" />`
+        : `<div class="vs-vehicle-img-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="40" height="40"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg></div>`;
+      const title = [v.year, v.make, v.model].filter(Boolean).join(' ') || 'Vehicle';
+      return `
+        <div class="vs-vehicle-card">
+          <div class="vs-vehicle-grid">
+            ${imgHtml}
+            <div class="vs-vehicle-info">
+              <h3 class="vs-vehicle-title">${esc(title)} <span class="vs-status vs-status-${esc(v.status)}">${esc(statusLabel(v.status))}</span></h3>
+              <div class="vs-vehicle-meta">
+                ${v.license_plate ? `<div class="vs-meta-item"><span class="vs-meta-label">Plate</span><span class="vs-meta-value">${esc(v.license_plate)}${v.plate_state ? ' · ' + esc(v.plate_state) : ''}</span></div>` : ''}
+                ${v.vin ? `<div class="vs-meta-item"><span class="vs-meta-label">VIN</span><span class="vs-meta-value" style="font-family:var(--mono,monospace);font-size:.82rem">${esc(v.vin)}</span></div>` : ''}
+                ${v.color ? `<div class="vs-meta-item"><span class="vs-meta-label">Color</span><span class="vs-meta-value">${esc(v.color)}</span></div>` : ''}
+                ${v.tow_date ? `<div class="vs-meta-item"><span class="vs-meta-label">Tow Date</span><span class="vs-meta-value">${esc(fmtDate(v.tow_date))}</span></div>` : ''}
+                ${v.location ? `<div class="vs-meta-item"><span class="vs-meta-label">Location</span><span class="vs-meta-value">${esc(v.location)}</span></div>` : ''}
+              </div>
+              ${v.public_note ? `<div class="vs-public-note">${esc(v.public_note)}</div>` : ''}
+              <div class="vs-vehicle-cta">
+                <a href="tel:+13108561980" class="btn btn-amber">Call (310) 856-1980</a>
+                <a href="/vehicle-release/" class="btn btn-ghost">How to claim</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorP.hidden = true;
+      resultsDiv.innerHTML = '';
+      emptyDiv.hidden = true;
+      initialDiv.hidden = true;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      };
+
+      let url: string;
+      if (searchType === 'vin') {
+        const vin = vinInput.value.trim();
+        if (!vin || vin.length < 6) {
+          errorP.textContent = 'Please enter at least 6 characters of the VIN.';
+          errorP.hidden = false;
+          return;
+        }
+        url = `${supabaseUrl}/rest/v1/vehicles?select=id,vin,license_plate,plate_state,year,make,model,color,status,tow_date,location,public_note,image_url&vin=ilike.${encodeURIComponent('%' + vin + '%')}&limit=10`;
+      } else {
+        const plate = plateInput.value.trim();
+        const state = stateInput.value.trim();
+        if (!plate) {
+          errorP.textContent = 'Please enter a license plate number.';
+          errorP.hidden = false;
+          return;
+        }
+        let filter = `license_plate=ilike.${encodeURIComponent('%' + plate + '%')}`;
+        if (state) {
+          filter += `&plate_state=ilike.${encodeURIComponent(state)}`;
+        }
+        url = `${supabaseUrl}/rest/v1/vehicles?select=id,vin,license_plate,plate_state,year,make,model,color,status,tow_date,location,public_note,image_url&${filter}&limit=10`;
+      }
+
+      try {
+        const res = await fetch(url, { headers });
+        if (!res.ok) throw new Error(`Search failed (${res.status})`);
+        const vehicles = await res.json() as any[];
+        if (vehicles.length === 0) {
+          emptyDiv.hidden = false;
+        } else {
+          resultsDiv.innerHTML = vehicles.map(renderVehicle).join('');
+        }
+      } catch (err) {
+        errorP.textContent = err instanceof Error ? err.message : 'Search failed. Please try again or call us.';
+        errorP.hidden = false;
+      }
+    });
+  </script>
+</Base>

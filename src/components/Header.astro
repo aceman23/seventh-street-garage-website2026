@@ -4,12 +4,13 @@ import { SERVICES, PRIMARY_SERVICES } from '@/data/services';
 import Icon from './Icon.astro';
 
 interface Props {
-  active?: 'areas' | 'services' | 'release' | 'auction' | 'about' | 'contact';
+  active?: 'areas' | 'services' | 'release' | 'auction' | 'about' | 'contact' | 'search';
 }
 const { active } = Astro.props;
 
 const navItems: { label: string; href: string; key?: string }[] = [
   { label: 'Service Areas', href: '/service-areas/', key: 'areas' },
+  { label: 'Search Vehicles', href: '/search-vehicles/', key: 'search' },
   { label: 'Claim Your Vehicle', href: '/vehicle-release/', key: 'release' },
   { label: 'Auction', href: '/auction/', key: 'auction' },
   { label: 'About', href: '/about/', key: 'about' },

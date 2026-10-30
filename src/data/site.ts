@@ -31,14 +31,14 @@ export const SITE = {
 // Fill youtube IDs or mp4 paths when client delivers videos. Empty = "Video coming soon".
 export const VIDEOS: Video[] = [
   { title: 'Inside our Wilmington yard', desc: 'A walk through our gated impound and storage facility.', poster: 'wilmington-hq-crop' },
-  { title: 'Heavy-duty recovery', desc: 'How our heavy wreckers handle semis and buses.', poster: 'heavy-wrecker-square' },
+  { title: 'Heavy-duty recovery', desc: 'How our heavy wreckers handle semis and big rigs.', poster: 'heavy-wrecker-square' },
   { title: 'Claiming your vehicle', desc: 'What to bring and what to expect at the release window.', poster: 'impound-gate' },
 ];
 
 export const HERO_SLIDES = [
   { img: 'night-tow-truck', alt: 'Seventh Street Garage tow truck with amber light bar at night', kicker: '24/7/365 dispatch', title: 'Out at 2am? So are we.', href: '/services/towing/' },
   { img: 'police-suv-flatbed', alt: 'LAPD police SUV loaded on a Seventh Street Garage flatbed', kicker: 'LAPD OPG Unit 5 · CHP Rotation', title: 'Trusted by public safety agencies', href: '/services/police-impound-towing/' },
-  { img: 'heavy-wrecker-square', alt: 'Seventh Street Garage heavy-duty wrecker in Bell Gardens', kicker: 'Heavy duty', title: 'Semis, buses and port rigs', href: '/services/heavy-duty-towing/' },
+  { img: 'heavy-wrecker-square', alt: 'Seventh Street Garage heavy-duty wrecker in Bell Gardens', kicker: 'Heavy duty', title: 'Semis and port rigs', href: '/services/heavy-duty-towing/' },
   { img: 'jump-start', alt: 'Operator jump-starting a car battery', kicker: 'Roadside assistance', title: 'Jump starts, lockouts and flats', href: '/services/roadside-assistance/' },
   { img: 'wilmington-hq-crop', alt: 'Seventh Street Garage headquarters in Wilmington', kicker: 'Secure storage', title: 'About 160 gated, monitored spaces', href: '/services/vehicle-storage/' },
 ];

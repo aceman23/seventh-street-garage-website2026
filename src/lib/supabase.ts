@@ -46,3 +46,22 @@ export type Setting = {
   value: string;
   updated_at: string;
 };
+
+export type Vehicle = {
+  id: string;
+  vin: string | null;
+  license_plate: string | null;
+  plate_state: string | null;
+  year: number | null;
+  make: string | null;
+  model: string | null;
+  color: string | null;
+  status: string;
+  tow_date: string | null;
+  location: string | null;
+  notes: string | null;
+  public_note: string | null;
+  image_url: string | null;
+  created_at: string;
+  updated_at: string;
+};

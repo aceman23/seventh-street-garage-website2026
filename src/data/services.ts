@@ -89,14 +89,14 @@ export const SERVICES: Service[] = [
   "slug": "heavy-duty-towing",
   "group": "Towing",
   "name": "Heavy-Duty Towing",
-  "card": "Heavy wreckers for semis, buses, RVs, box trucks and port drayage rigs on the 710, 110 and 405.",
+  "card": "Heavy wreckers for semis, RVs, box trucks and port drayage rigs on the 710, 110 and 405.",
   "title": "Heavy-Duty Truck & Semi Towing | Port of LA & Long Beach",
-  "desc": "24/7 heavy-duty towing for semi trucks, tractor-trailers, buses, RVs and box trucks near the Ports of LA and Long Beach. Call (310) 856-1980.",
+  "desc": "24/7 heavy-duty towing for semi trucks, tractor-trailers, RVs and box trucks near the Ports of LA and Long Beach. Call (310) 856-1980.",
   "eyebrow": "Heavy duty",
-  "h1": "Heavy-duty towing for semis, buses and commercial trucks",
+  "h1": "Heavy-duty towing for semis and commercial trucks",
   "img": "heavy-wrecker-crop",
   "img_alt": "Seventh Street Garage heavy-duty rotator wrecker parked in Bell Gardens",
-  "intro": "Seventh Street Garage runs heavy-duty wreckers for tractor-trailers, semi trucks, buses, motor coaches, RVs, box trucks, garbage trucks and other commercial vehicles. Our Wilmington yard sits beside the Port of Los Angeles and the Port of Long Beach freight corridors, and our Bell Gardens yard covers the I-5 and I-710 interchange area. Dispatch is open 24/7 at <a href=\"tel:+13108561980\">(310) 856-1980</a>.",
+  "intro": "Seventh Street Garage runs heavy-duty wreckers for tractor-trailers, semi trucks, RVs, box trucks, garbage trucks and other commercial vehicles. Our Wilmington yard sits beside the Port of Los Angeles and the Port of Long Beach freight corridors, and our Bell Gardens yard covers the I-5 and I-710 interchange area. Dispatch is open 24/7 at <a href=\"tel:+13108561980\">(310) 856-1980</a>.",
   "facts": [
    {
     "label": "Vehicle classes",
@@ -104,7 +104,7 @@ export const SERVICES: Service[] = [
    },
    {
     "label": "Typical calls",
-    "value": "Semi breakdowns, drayage trucks, buses, RVs, box trucks"
+    "value": "Semi breakdowns, drayage trucks, RVs, box trucks"
    },
    {
     "label": "Freeways",
@@ -122,7 +122,7 @@ export const SERVICES: Service[] = [
    },
    {
     "heading": "Fleet and commercial accounts",
-    "html": "<p>Trucking companies, bus operators, waste haulers and delivery fleets can set up an account with Seventh Street Garage for priority dispatch and simplified billing. Call the office to talk through your fleet, routes and the paperwork your drivers need at the scene.</p>"
+    "html": "<p>Trucking companies, waste haulers and delivery fleets can set up an account with Seventh Street Garage for priority dispatch and simplified billing. Call the office to talk through your fleet, routes and the paperwork your drivers need at the scene.</p>"
    },
    {
     "heading": "Recovery, not just towing",
@@ -134,7 +134,7 @@ export const SERVICES: Service[] = [
    "Tractor-trailer towing",
    "Semi trailer towing and storage",
    "Port drayage and chassis towing",
-   "Bus and motor coach towing",
+   
    "RV and motorhome towing",
    "Box truck and delivery van towing",
    "Garbage and refuse truck towing",
@@ -152,7 +152,7 @@ export const SERVICES: Service[] = [
    },
    {
     "q": "Do you work with fleet and trucking companies?",
-    "a": "Yes. We offer commercial accounts for trucking, bus, waste and delivery fleets. Call the office to set one up."
+    "a": "Yes. We offer commercial accounts for trucking, waste and delivery fleets. Call the office to set one up."
    },
    {
     "q": "Which areas do you cover for heavy towing?",

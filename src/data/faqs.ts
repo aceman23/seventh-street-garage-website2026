@@ -18,8 +18,8 @@ export const HOME_FAQ: Faq[] = [
   "a": "Yes. Seventh Street Garage is the LAPD Official Police Garage, Unit 5, for the South LA / Harbor area, and participates in the CHP Rotation Tow Program. We also serve the Port of Los Angeles Police and the Los Angeles County Sheriff's Department."
  },
  {
-  "q": "Do you tow semi trucks, buses and RVs?",
-  "a": "Yes. Our heavy-duty wreckers handle tractor-trailers, semis, buses, motor coaches, RVs, box trucks and garbage trucks, including port drayage trucks near the Ports of Los Angeles and Long Beach."
+  "q": "Do you tow semi trucks and RVs?",
+  "a": "Yes. Our heavy-duty wreckers handle tractor-trailers, semis, RVs, box trucks and garbage trucks, including port drayage trucks near the Ports of Los Angeles and Long Beach."
  },
  {
   "q": "When is the public auction?",

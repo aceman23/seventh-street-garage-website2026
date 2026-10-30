@@ -20,9 +20,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 </div>
     <script>
       import { createClient } from '@supabase/supabase-js';
-      import type { Inquiry, Faq, Setting } from '@/lib/supabase';
+      import type { Inquiry, Faq, Setting, Vehicle } from '@/lib/supabase';
 
-      type Tab = 'inquiries' | 'faqs' | 'settings';
+      type Tab = 'inquiries' | 'faqs' | 'vehicles' | 'settings';
 
       const root = document.getElementById('admin-root')!;
 
@@ -46,6 +46,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
       let inquiries: Inquiry[] = [];
       let faqs: Faq[] = [];
+      let vehicles: Vehicle[] = [];
       let settings: Setting[] = [];
       let dataLoading = false;
 
@@ -106,6 +107,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
         authed = false;
         inquiries = [];
         faqs = [];
+        vehicles = [];
         settings = [];
         render();
       }
@@ -113,13 +115,15 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
       // ---------- Data loading ----------
       async function loadAll(): Promise<void> {
         dataLoading = true;
-        const [inqRes, faqRes, setRes] = await Promise.all([
+        const [inqRes, faqRes, vehRes, setRes] = await Promise.all([
           supabase.from('inquiries').select('*').order('created_at', { ascending: false }),
           supabase.from('faqs').select('*').order('category').order('sort_order'),
+          supabase.from('vehicles').select('*').order('created_at', { ascending: false }),
           supabase.from('settings').select('*').order('key'),
         ]);
         if (inqRes.data) inquiries = inqRes.data as Inquiry[];
         if (faqRes.data) faqs = faqRes.data as Faq[];
+        if (vehRes.data) vehicles = vehRes.data as Vehicle[];
         if (setRes.data) settings = setRes.data as Setting[];
         dataLoading = false;
       }
@@ -211,6 +215,35 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
         saving = true;
         render();
         const { error } = await supabase.from('settings').delete().eq('key', key);
+        if (error) saveError = error.message;
+        else { await loadAll(); deleteConfirmId = null; }
+        saving = false;
+        render();
+      }
+
+      // ---------- Vehicles CRUD ----------
+      async function saveVehicle(data: Partial<Vehicle>): Promise<void> {
+        saving = true;
+        saveError = '';
+        render();
+        const { id, vin, license_plate, plate_state, year, make, model, color, status, tow_date, location, notes, public_note, image_url } = data;
+        const payload = { vin, license_plate, plate_state, year, make, model, color, status, tow_date, location, notes, public_note, image_url, updated_at: new Date().toISOString() };
+        if (id) {
+          const { error } = await supabase.from('vehicles').update(payload).eq('id', id);
+          if (error) saveError = error.message;
+        } else {
+          const { error } = await supabase.from('vehicles').insert([payload]);
+          if (error) saveError = error.message;
+        }
+        saving = false;
+        if (!saveError) { editId = null; creatingNew = false; await loadAll(); }
+        render();
+      }
+
+      async function deleteVehicle(id: string): Promise<void> {
+        saving = true;
+        render();
+        const { error } = await supabase.from('vehicles').delete().eq('id', id);
         if (error) saveError = error.message;
         else { await loadAll(); deleteConfirmId = null; }
         saving = false;
@@ -310,6 +343,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
         const tabs: { key: Tab; label: string; count: number | null }[] = [
           { key: 'inquiries', label: 'Inquiries', count: inquiries.length },
           { key: 'faqs', label: 'FAQs', count: faqs.length },
+          { key: 'vehicles', label: 'Vehicles', count: vehicles.length },
           { key: 'settings', label: 'Settings', count: settings.length },
         ];
         root.innerHTML = `
@@ -341,6 +375,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
               ${dataLoading ? '<p style="color:var(--a-muted);font-size:.9rem">Loading data…</p>' : ''}
               ${activeTab === 'inquiries' ? renderInquiries() : ''}
               ${activeTab === 'faqs' ? renderFaqs() : ''}
+              ${activeTab === 'vehicles' ? renderVehicles() : ''}
               ${activeTab === 'settings' ? renderSettings() : ''}
             </main>
           </div>
@@ -358,6 +393,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
         );
         if (activeTab === 'inquiries') wireInquiries();
         if (activeTab === 'faqs') wireFaqs();
+        if (activeTab === 'vehicles') wireVehicles();
         if (activeTab === 'settings') wireSettings();
       }
 
@@ -713,6 +749,162 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
             btn.addEventListener('click', () => void deleteSetting(btn.getAttribute('data-confirm-del-set')!)),
           );
           editForm.querySelectorAll('[data-cancel-del]').forEach((btn) =>
+            btn.addEventListener('click', () => { deleteConfirmId = null; render(); }),
+          );
+        }
+      }
+
+      // ---------- Vehicles view ----------
+      function renderVehicles(): string {
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem">
+            <h2 class="admin-section-title">Vehicles</h2>
+            <button class="admin-btn admin-btn-amber admin-btn-sm" id="btn-new-vehicle">+ Add Vehicle</button>
+          </div>
+          ${creatingNew ? renderVehicleForm(null) : ''}
+          ${vehicles.length === 0 && !dataLoading
+            ? `<div class="admin-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg><p>No vehicles yet.</p><span class="cta">Add a vehicle above to make it searchable.</span></div>`
+            : `<div class="admin-card"><table class="admin-table">
+              <thead><tr><th>Vehicle</th><th>Plate</th><th>VIN</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                ${vehicles.map((v) => `
+                  <tr>
+                    <td><b>${esc([v.year, v.make, v.model].filter(Boolean).join(' ') || 'Unknown')}</b>${v.color ? `<br><span style="font-size:.82rem;color:var(--a-muted)">${esc(v.color)}</span>` : ''}</td>
+                    <td style="font-family:var(--a-mono);font-size:.85rem">${v.license_plate ? esc(v.license_plate) + (v.plate_state ? ' · ' + esc(v.plate_state) : '') : '—'}</td>
+                    <td style="font-family:var(--a-mono);font-size:.82rem">${v.vin ? esc(v.vin.slice(0, 10)) + '…' : '—'}</td>
+                    <td><span class="admin-pill admin-pill-${v.status === 'stored' ? 'new' : v.status === 'released' ? 'replied' : v.status === 'hold' ? 'draft' : 'read'}">${esc(v.status)}</span></td>
+                    <td><button class="admin-btn admin-btn-ghost admin-btn-sm" data-edit-vehicle="${esc(v.id)}">Edit</button></td>
+                  </tr>
+                  ${editId === v.id ? `<tr class="admin-row-expand"><td colspan="5">${renderVehicleForm(v)}</td></tr>` : ''}
+                `).join('')}
+              </tbody>
+            </table></div>`}
+        `;
+      }
+
+      function renderVehicleForm(v: Vehicle | null): string {
+        const isEdit = !!v;
+        const statusOpts = ['stored', 'released', 'auction', 'hold'];
+        return `
+          <div class="admin-card" style="margin-bottom:1rem">
+            <div class="admin-card-body">
+              <h3 style="margin:0 0 1rem;font-family:var(--a-display);font-weight:800;font-size:.95rem;text-transform:uppercase">${isEdit ? 'Edit Vehicle' : 'New Vehicle'}</h3>
+              <form id="vehicle-form">
+                <div class="admin-form-row">
+                  <div class="admin-form-field">
+                    <label>Year</label>
+                    <input type="number" id="veh-year" value="${v?.year ?? ''}" placeholder="2020" min="1900" max="2099" />
+                  </div>
+                  <div class="admin-form-field">
+                    <label>Make</label>
+                    <input type="text" id="veh-make" value="${v ? esc(v.make ?? '') : ''}" placeholder="Toyota" />
+                  </div>
+                </div>
+                <div class="admin-form-row">
+                  <div class="admin-form-field">
+                    <label>Model</label>
+                    <input type="text" id="veh-model" value="${v ? esc(v.model ?? '') : ''}" placeholder="Camry" />
+                  </div>
+                  <div class="admin-form-field">
+                    <label>Color</label>
+                    <input type="text" id="veh-color" value="${v ? esc(v.color ?? '') : ''}" placeholder="Silver" />
+                  </div>
+                </div>
+                <div class="admin-form-row">
+                  <div class="admin-form-field">
+                    <label>License Plate</label>
+                    <input type="text" id="veh-plate" value="${v ? esc(v.license_plate ?? '') : ''}" placeholder="7ABC123" style="text-transform:uppercase" />
+                  </div>
+                  <div class="admin-form-field">
+                    <label>Plate State</label>
+                    <input type="text" id="veh-state" value="${v ? esc(v.plate_state ?? '') : ''}" placeholder="CA" maxlength="3" style="text-transform:uppercase" />
+                  </div>
+                </div>
+                <div class="admin-form-field">
+                  <label>VIN</label>
+                  <input type="text" id="veh-vin" value="${v ? esc(v.vin ?? '') : ''}" placeholder="17-character VIN" maxlength="17" style="font-family:var(--a-mono);text-transform:uppercase" />
+                </div>
+                <div class="admin-form-row">
+                  <div class="admin-form-field">
+                    <label>Status</label>
+                    <select id="veh-status">
+                      ${statusOpts.map((s) => `<option value="${s}" ${(v?.status ?? 'stored') === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div class="admin-form-field">
+                    <label>Tow Date</label>
+                    <input type="date" id="veh-towdate" value="${v?.tow_date ? v.tow_date.slice(0, 10) : ''}" />
+                  </div>
+                </div>
+                <div class="admin-form-field">
+                  <label>Location / Yard</label>
+                  <input type="text" id="veh-location" value="${v ? esc(v.location ?? '') : ''}" placeholder="Wilmington HQ" />
+                </div>
+                <div class="admin-form-field">
+                  <label>Image URL</label>
+                  <input type="text" id="veh-image" value="${v ? esc(v.image_url ?? '') : ''}" placeholder="https://..." style="font-family:var(--a-mono);font-size:.85rem" />
+                </div>
+                <div class="admin-form-field">
+                  <label>Public Note (visible on search page)</label>
+                  <input type="text" id="veh-public-note" value="${v ? esc(v.public_note ?? '') : ''}" placeholder="e.g. Hold pending police release" />
+                </div>
+                <div class="admin-form-field">
+                  <label>Internal Notes (admin only)</label>
+                  <textarea id="veh-notes" placeholder="Internal notes not shown to public…">${v ? esc(v.notes ?? '') : ''}</textarea>
+                </div>
+                <div class="admin-form-actions">
+                  <button type="submit" class="admin-btn admin-btn-amber admin-btn-sm" ${saving ? 'disabled' : ''}>
+                    ${saving ? '<span class="admin-spin-inline"></span> Saving…' : 'Save Vehicle'}
+                  </button>
+                  <button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="vehicle-cancel">Cancel</button>
+                  ${isEdit ? (deleteConfirmId === v!.id
+                    ? `<span class="admin-del-confirm"><span class="q">Delete?</span><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-confirm-del-vehicle="${esc(v!.id)}">Yes, delete</button><button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-cancel-del>Cancel</button></span>`
+                    : `<button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-del-vehicle="${esc(v!.id)}">Delete</button>`) : ''}
+                </div>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      function wireVehicles(): void {
+        const newBtn = root.querySelector('#btn-new-vehicle');
+        if (newBtn) newBtn.addEventListener('click', () => { creatingNew = true; editId = null; deleteConfirmId = null; render(); });
+        root.querySelectorAll('[data-edit-vehicle]').forEach((btn) =>
+          btn.addEventListener('click', () => { editId = editId === btn.getAttribute('data-edit-vehicle') ? null : btn.getAttribute('data-edit-vehicle'); creatingNew = false; deleteConfirmId = null; render(); }),
+        );
+        const form = root.querySelector('#vehicle-form') as HTMLFormElement | null;
+        if (form) {
+          form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const yearVal = (root.querySelector('#veh-year') as HTMLInputElement).value.trim();
+            const towDateVal = (root.querySelector('#veh-towdate') as HTMLInputElement).value;
+            void saveVehicle({
+              id: editId ?? undefined,
+              year: yearVal ? parseInt(yearVal, 10) : null,
+              make: (root.querySelector('#veh-make') as HTMLInputElement).value.trim() || null,
+              model: (root.querySelector('#veh-model') as HTMLInputElement).value.trim() || null,
+              color: (root.querySelector('#veh-color') as HTMLInputElement).value.trim() || null,
+              license_plate: (root.querySelector('#veh-plate') as HTMLInputElement).value.trim() || null,
+              plate_state: (root.querySelector('#veh-state') as HTMLInputElement).value.trim() || null,
+              vin: (root.querySelector('#veh-vin') as HTMLInputElement).value.trim() || null,
+              status: (root.querySelector('#veh-status') as HTMLSelectElement).value,
+              tow_date: towDateVal ? new Date(towDateVal).toISOString() : null,
+              location: (root.querySelector('#veh-location') as HTMLInputElement).value.trim() || null,
+              image_url: (root.querySelector('#veh-image') as HTMLInputElement).value.trim() || null,
+              public_note: (root.querySelector('#veh-public-note') as HTMLInputElement).value.trim() || null,
+              notes: (root.querySelector('#veh-notes') as HTMLTextAreaElement).value.trim() || null,
+            });
+          });
+          const cancel = form.querySelector('#vehicle-cancel');
+          if (cancel) cancel.addEventListener('click', () => { editId = null; creatingNew = false; deleteConfirmId = null; render(); });
+          form.querySelectorAll('[data-del-vehicle]').forEach((btn) =>
+            btn.addEventListener('click', () => { deleteConfirmId = btn.getAttribute('data-del-vehicle'); render(); }),
+          );
+          form.querySelectorAll('[data-confirm-del-vehicle]').forEach((btn) =>
+            btn.addEventListener('click', () => void deleteVehicle(btn.getAttribute('data-confirm-del-vehicle')!)),
+          );
+          form.querySelectorAll('[data-cancel-del]').forEach((btn) =>
             btn.addEventListener('click', () => { deleteConfirmId = null; render(); }),
           );
         }
